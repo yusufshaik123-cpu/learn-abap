@@ -1,3 +1,27 @@
+export interface UserProfile {
+  id: string;
+  username: string;
+  display_name: string;
+  role_title: string;
+  avatar_color: string;
+  xp: number;
+  streak_days: number;
+  is_active?: boolean;
+  lessons_completed?: number;
+  quizzes_passed?: number;
+  challenges_solved?: number;
+  mastery_score?: number;
+  rank?: number;
+  isCurrentUser?: boolean;
+}
+
+export interface LeaderboardResponse {
+  leaderboard: UserProfile[];
+  activeUser: UserProfile | null;
+  cloudSynced: boolean;
+  totalUsers: number;
+}
+
 export interface LearnerProfile {
   id: string;
   display_name: string;

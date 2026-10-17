@@ -1,4 +1,6 @@
 import type {
+  UserProfile,
+  LeaderboardResponse,
   LearnerProfile,
   Path,
   LessonDetail,
@@ -32,6 +34,14 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  // Users & Leaderboard
+  getUsers: () => fetchJson<{ users: UserProfile[]; activeUser: UserProfile | null }>('/users'),
+  createUser: (data: { username: string; display_name: string; role_title: string; avatar_color: string }) =>
+    fetchJson<{ success: boolean; user: UserProfile }>('/users', { method: 'POST', body: JSON.stringify(data) }),
+  switchUser: (userId: string) =>
+    fetchJson<{ success: boolean; activeUser: UserProfile }>('/users/switch', { method: 'POST', body: JSON.stringify({ userId }) }),
+  getLeaderboard: () => fetchJson<LeaderboardResponse>('/leaderboard'),
+
   // Profile
   getProfile: () => fetchJson<LearnerProfile>('/profile'),
   updateProfile: (data: Partial<LearnerProfile>) =>

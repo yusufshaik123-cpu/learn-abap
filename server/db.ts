@@ -247,7 +247,39 @@ export function initDatabase() {
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      username TEXT UNIQUE NOT NULL,
+      display_name TEXT NOT NULL,
+      role_title TEXT DEFAULT 'ABAP Developer',
+      avatar_color TEXT DEFAULT 'indigo',
+      xp INTEGER DEFAULT 100,
+      streak_days INTEGER DEFAULT 1,
+      is_active BOOLEAN DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
   `);
+
+  // Ensure default peer learners exist for the leaderboard
+  const peerCount = (db.prepare('SELECT count(*) as count FROM users').get() as any).count;
+  if (peerCount === 0) {
+    const insertPeer = db.prepare(`
+      INSERT OR REPLACE INTO users (id, username, display_name, role_title, avatar_color, xp, streak_days, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    // Default primary active user
+    insertPeer.run('usr-me', 'abap_dev', 'Learner', 'ABAP Developer', 'indigo', 350, 2, 1);
+
+    // Competitive community learners
+    insertPeer.run('usr-rap-arch', 'rap_architect', 'Senior RAP Specialist', 'RAP Enterprise Architect', 'purple', 3450, 18, 0);
+    insertPeer.run('usr-clean-abap', 'clean_coder', 'ABAP Craftsman', 'Clean ABAP Lead', 'emerald', 2890, 14, 0);
+    insertPeer.run('usr-cds-wizard', 'core_data_fan', 'CDS Data Modeler', 'SAP S/4HANA Consultant', 'sky', 2150, 9, 0);
+    insertPeer.run('usr-subrc-zero', 'subrc_zero', 'Bug Hunter', 'ABAP Quality Engineer', 'amber', 1780, 7, 0);
+    insertPeer.run('usr-cloud-dev', 'btp_cloud_dev', 'Cloud Extender', 'BTP Developer', 'rose', 1250, 5, 0);
+  }
 
   // Ensure default profile exists
   const existingProfile = db.prepare('SELECT id FROM learner_profile LIMIT 1').get();

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { SearchModal } from './components/SearchModal';
+import { UserModal } from './components/UserModal';
 import { DashboardPage } from './pages/DashboardPage';
 import { RoadmapPage } from './pages/RoadmapPage';
 import { LessonReaderPage } from './pages/LessonReaderPage';
@@ -14,22 +15,31 @@ import { ProjectsPage } from './pages/ProjectsPage';
 import { PlannerPage } from './pages/PlannerPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { NotesBookmarksPage } from './pages/NotesBookmarksPage';
+import { LeaderboardPage } from './pages/LeaderboardPage';
 import { api } from './api';
-import type { LearnerProfile } from './types';
+import type { LearnerProfile, UserProfile } from './types';
 
 export const App: React.FC = () => {
   const [profile, setProfile] = useState<LearnerProfile | null>(null);
+  const [activeUser, setActiveUser] = useState<UserProfile | null>(null);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
     async function init() {
       try {
-        const p = await api.getProfile();
+        const [p, u] = await Promise.all([
+          api.getProfile(),
+          api.getUsers()
+        ]);
         setProfile(p);
+        setUsers(u.users);
+        setActiveUser(u.activeUser);
       } catch (err) {
-        console.error('Failed to load profile', err);
+        console.error('Failed to load profile and users', err);
       }
     }
     init();
@@ -47,13 +57,26 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleUserChanged = (user: UserProfile) => {
+    setActiveUser(user);
+    setUsers(prev => {
+      const exists = prev.some(u => u.id === user.id);
+      if (exists) {
+        return prev.map(u => ({ ...u, is_active: u.id === user.id }));
+      }
+      return [user, ...prev.map(u => ({ ...u, is_active: false }))];
+    });
+  };
+
   return (
     <BrowserRouter>
       <div className={`min-h-screen flex flex-col ${isDark ? 'dark bg-slate-950 text-slate-100' : 'light bg-slate-50 text-slate-900'}`}>
         {/* Top Navbar */}
         <Navbar
           profile={profile}
+          activeUser={activeUser}
           onOpenSearch={() => setIsSearchOpen(true)}
+          onOpenUserModal={() => setIsUserModalOpen(true)}
           isDark={isDark}
           onToggleTheme={handleToggleTheme}
         />
@@ -68,6 +91,7 @@ export const App: React.FC = () => {
           <main className="flex-1 overflow-y-auto min-h-[calc(100vh-4rem)]">
             <Routes>
               <Route path="/" element={<DashboardPage />} />
+              <Route path="/leaderboard" element={<LeaderboardPage onOpenUserModal={() => setIsUserModalOpen(true)} />} />
               <Route path="/roadmap" element={<RoadmapPage />} />
               <Route path="/lessons/:id" element={<LessonReaderPage />} />
               <Route path="/quizzes" element={<QuizCenterPage />} />
@@ -86,6 +110,15 @@ export const App: React.FC = () => {
         <SearchModal
           isOpen={isSearchOpen}
           onClose={() => setIsSearchOpen(false)}
+        />
+
+        {/* User Account / Profile Creation & Switcher Modal */}
+        <UserModal
+          isOpen={isUserModalOpen}
+          onClose={() => setIsUserModalOpen(false)}
+          activeUser={activeUser}
+          users={users}
+          onUserChanged={handleUserChanged}
         />
       </div>
     </BrowserRouter>

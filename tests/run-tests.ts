@@ -186,9 +186,35 @@ test('Database contains no personal emails, student usernames, or college names'
 });
 
 // ----------------------------------------------------
-// 5. Calculated Transparent Mastery Tests
+// 5. User Creation & Leaderboard Tests
 // ----------------------------------------------------
-console.log('\nSection 5: Analytics & Mastery Formula');
+console.log('\nSection 5: User Creation & Leaderboard Functionality');
+
+test('Can create a new learner user seamlessly', () => {
+  const newUserId = `usr-test-${Date.now()}`;
+  db.prepare(`
+    INSERT OR REPLACE INTO users (id, username, display_name, role_title, avatar_color, xp, streak_days, is_active)
+    VALUES (?, 'ninja_coder', 'ABAP Ninja', 'Clean ABAP Craftsman', 'emerald', 850, 4, 1)
+  `).run(newUserId);
+
+  const user = db.prepare('SELECT * FROM users WHERE username = ?').get('ninja_coder') as any;
+  assert.strictEqual(user.username, 'ninja_coder');
+  assert.strictEqual(user.display_name, 'ABAP Ninja');
+  assert.strictEqual(user.xp, 850);
+});
+
+test('Leaderboard orders users by XP descending', () => {
+  const users = db.prepare('SELECT username, xp FROM users ORDER BY xp DESC').all() as any[];
+  assert(users.length >= 3, 'Expected at least 3 users on leaderboard');
+  for (let i = 0; i < users.length - 1; i++) {
+    assert(users[i].xp >= users[i + 1].xp, 'Users must be ordered by XP descending');
+  }
+});
+
+// ----------------------------------------------------
+// 6. Calculated Transparent Mastery Tests
+// ----------------------------------------------------
+console.log('\nSection 6: Analytics & Mastery Formula');
 
 test('Calculates mastery using documented 40/30/30 formula', () => {
   const totalLessons = 10;

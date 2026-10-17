@@ -4,17 +4,25 @@ import type { LearnerProfile } from '../types';
 
 interface NavbarProps {
   profile: LearnerProfile | null;
+  activeUser?: any;
   onOpenSearch: () => void;
+  onOpenUserModal: () => void;
   isDark: boolean;
   onToggleTheme: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   profile,
+  activeUser,
   onOpenSearch,
+  onOpenUserModal,
   isDark,
   onToggleTheme
 }) => {
+  const displayName = activeUser?.display_name || profile?.display_name || 'Learner';
+  const roleTitle = activeUser?.role_title || profile?.role_title || 'ABAP Developer';
+  const avatarInitials = displayName.slice(0, 2).toUpperCase();
+
   return (
     <header className="sticky top-0 z-30 h-16 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between">
       {/* Product Brand */}
@@ -67,32 +75,45 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Study Streak */}
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-semibold">
           <Flame className="w-4 h-4 fill-amber-500/20 text-amber-500 animate-pulse" />
-          <span>{profile?.streak_days || 1} Day Streak</span>
+          <span>{activeUser?.streak_days || profile?.streak_days || 1}d Streak</span>
         </div>
 
-        {/* Theme Toggle */}
+        {/* Theme Toggle: Bright & Dark Mode */}
         <button
           onClick={onToggleTheme}
           className="p-2 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors"
-          title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          title={isDark ? "Switch to Bright Mode" : "Switch to Dark Mode"}
         >
           {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
         </button>
 
-        {/* Learner Profile Pill - Strict Privacy Compliant */}
-        <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
-          <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-bold text-indigo-400">
-            AD
+        {/* Learner Profile Button - Click to switch/create user */}
+        <button
+          onClick={onOpenUserModal}
+          className="flex items-center gap-2 pl-2 border-l border-slate-800 hover:opacity-80 transition-opacity text-left group"
+          title="Manage Learner Profile / Switch User"
+        >
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm ${
+            activeUser?.avatar_color === 'purple' ? 'bg-purple-600' :
+            activeUser?.avatar_color === 'emerald' ? 'bg-emerald-600' :
+            activeUser?.avatar_color === 'sky' ? 'bg-sky-600' :
+            activeUser?.avatar_color === 'amber' ? 'bg-amber-600' :
+            'bg-indigo-600'
+          }`}>
+            {avatarInitials}
           </div>
           <div className="hidden lg:block text-left">
-            <div className="text-xs font-semibold text-slate-200">
-              {profile?.display_name || 'Learner'}
+            <div className="text-xs font-semibold text-slate-200 group-hover:text-indigo-400 transition-colors flex items-center gap-1">
+              <span>{displayName}</span>
+              {activeUser?.xp && (
+                <span className="text-[10px] text-amber-400 font-mono">({activeUser.xp} XP)</span>
+              )}
             </div>
             <div className="text-[10px] text-slate-400 font-mono">
-              {profile?.role_title || 'ABAP Developer'}
+              {roleTitle}
             </div>
           </div>
-        </div>
+        </button>
       </div>
     </header>
   );

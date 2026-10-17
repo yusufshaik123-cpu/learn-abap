@@ -12,6 +12,7 @@ import {
   CalendarCheck,
   BarChart3,
   BookmarkCheck,
+  Trophy,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -24,6 +25,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onToggleCollapse }) => {
   const navItems = [
     { to: '/', label: 'Dashboard', icon: LayoutDashboard },
+    { to: '/leaderboard', label: 'Leaderboard', icon: Trophy, badge: 'Rank' },
     { to: '/roadmap', label: 'Roadmap', icon: Compass },
     { to: '/quizzes', label: 'Quiz Center', icon: HelpCircle },
     { to: '/practice', label: 'Coding Practice', icon: Code2 },

@@ -193,7 +193,41 @@ Test Execution Finished: 14 / 14 Passed
 
 ---
 
-## 6. Limitations & Future Integrations
+## 6. Deployment to Vercel
+
+The application is pre-configured with [`vercel.json`](file:///home/john/learn-abap/vercel.json) for 1-click deployment on Vercel.
+
+### Option A: Via GitHub (Recommended)
+1. Go to [vercel.com](https://vercel.com) and log in with your GitHub account.
+2. Click **"Add New..."** -> **"Project"**.
+3. Import the repository: `https://github.com/yusufshaik123-cpu/learn-abap`.
+4. Vercel automatically detects the **Vite** framework preset:
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
+   - **Install Command:** `npm install`
+5. (Optional) In **Environment Variables**, add:
+   - `VITE_SUPABASE_URL`: `https://qvciohvwcuggfdnoskiu.supabase.co`
+   - `VITE_SUPABASE_ANON_KEY`: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+6. Click **Deploy**. Your site will be live on your custom `.vercel.app` URL within seconds!
+
+### Option B: Via Vercel CLI
+```bash
+npm i -g vercel
+vercel login
+vercel --prod
+```
+
+---
+
+## 7. Mobile Android App (APK)
+
+A native Android APK has been built and included in this repository:
+- **APK File:** [`ABAP-Mastery.apk`](file:///home/john/learn-abap/ABAP-Mastery.apk) (4.2 MB)
+- **Features:** 100% offline standalone execution, pre-bundled curriculum, client-side SM-2 spaced repetition, and Supabase cloud sync.
+
+---
+
+## 8. Limitations & Future Integrations
 
 - **Simulated Learning Sandbox:** The embedded execution sandbox simulates ABAP expressions, loops, control structures, internal tables, and `SY-SUBRC` for offline educational problem-solving. It does not replace a production SAP Kernel.
 - **Enterprise SAP Backend Connection:** For advanced RAP development requiring real database activation (SE11/DDIC), OData V4 publishing, and Fiori Elements previews, users should connect their local ADT on Eclipse to an SAP S/4HANA Fully Activated Appliance or SAP BTP ABAP Environment Trial.

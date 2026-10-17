@@ -13,6 +13,26 @@ export interface UserProfile {
   mastery_score?: number;
   rank?: number;
   isCurrentUser?: boolean;
+  created_at?: string;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  user: UserProfile;
+  error?: string;
+}
+
+export interface RegisterRequest {
+  username: string;
+  password: string;
+  display_name: string;
+  role_title?: string;
+  avatar_color?: string;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
 }
 
 export interface LeaderboardResponse {
@@ -239,36 +259,6 @@ export interface Flashcard {
   last_rating?: string;
 }
 
-export interface SprintDay {
-  day_number: number;
-  title: string;
-  subtitle: string;
-  focus_area: string;
-  objectives: string[];
-  theory_md: string;
-  code_examples: {
-    title: string;
-    code: string;
-    output?: string;
-  }[];
-  practice_tasks: {
-    id: string;
-    title: string;
-    description: string;
-  }[];
-  quiz_questions: {
-    question: string;
-    options: string[];
-    correctAnswer: string;
-    explanation: string;
-  }[];
-  revision_points: string[];
-  completion_criteria: string[];
-  is_completed: boolean;
-  completed_tasks: string[];
-  quiz_score?: number;
-  completed_at?: string;
-}
 
 export interface ProjectMilestone {
   title: string;

@@ -5,7 +5,6 @@ import {
   SEED_CHALLENGES,
   SEED_QUIZZES,
   SEED_FLASHCARDS,
-  SEED_SPRINT_DAYS,
   SEED_PROJECTS
 } from './data/seedData';
 import { AbapSimulator } from './data/abapRunner';
@@ -24,14 +23,30 @@ import type {
   Challenge,
   ExecutionResult,
   Flashcard,
-  SprintDay,
   Project,
   PersonalNote,
   Bookmark,
-  AnalyticsData
+  AnalyticsData,
+  AuthResponse,
+  RegisterRequest,
+  LoginRequest
 } from './types';
 
 const simulator = new AbapSimulator();
+
+const FAKE_USERNAMES = new Set(['rap_architect', 'clean_coder', 'core_data_fan', 'subrc_zero', 'btp_cloud_dev', 'abap_dev']);
+
+async function hashPasswordClient(password: string): Promise<string> {
+  try {
+    const enc = new TextEncoder();
+    const data = enc.encode(password + '_abap_salt_2026');
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch {
+    return btoa(password + '_abap_salt_2026');
+  }
+}
 
 // Flatten questions from SEED_QUIZZES
 const ALL_SEED_QUESTIONS: QuizQuestion[] = SEED_QUIZZES.flatMap(q =>
@@ -73,7 +88,7 @@ export const offlineService = {
       id: 'default',
       display_name: 'Learner',
       role_title: 'ABAP Developer',
-      streak_days: 2,
+      streak_days: 1,
       daily_budget_mins: 45,
       target_date: '2026-12-31',
       created_at: new Date().toISOString(),
@@ -88,73 +103,132 @@ export const offlineService = {
     return updated;
   },
 
-  // Users & Leaderboard
+  // Authentication & Users
   getUsers(): { users: UserProfile[]; activeUser: UserProfile | null } {
-    const defaultUsers: UserProfile[] = [
-      { id: 'usr-me', username: 'abap_dev', display_name: 'Learner', role_title: 'ABAP Developer', avatar_color: 'indigo', xp: 450, streak_days: 2, is_active: true },
-      { id: 'usr-rap-arch', username: 'rap_architect', display_name: 'Senior RAP Specialist', role_title: 'RAP Enterprise Architect', avatar_color: 'purple', xp: 3450, streak_days: 18, is_active: false },
-      { id: 'usr-clean-abap', username: 'clean_coder', display_name: 'ABAP Craftsman', role_title: 'Clean ABAP Lead', avatar_color: 'emerald', xp: 2890, streak_days: 14, is_active: false },
-      { id: 'usr-cds-wizard', username: 'core_data_fan', display_name: 'CDS Data Modeler', role_title: 'SAP S/4HANA Consultant', avatar_color: 'sky', xp: 2150, streak_days: 9, is_active: false },
-      { id: 'usr-subrc-zero', username: 'subrc_zero', display_name: 'Bug Hunter', role_title: 'ABAP Quality Engineer', avatar_color: 'amber', xp: 1780, streak_days: 7, is_active: false },
-      { id: 'usr-cloud-dev', username: 'btp_cloud_dev', display_name: 'Cloud Extender', role_title: 'BTP Developer', avatar_color: 'rose', xp: 1250, streak_days: 5, is_active: false }
-    ];
-
-    const users = getItem<UserProfile[]>('abap_users', defaultUsers);
-    const activeUser = users.find(u => u.is_active) || users[0] || null;
-    return { users, activeUser };
+    const stored = getItem<UserProfile[]>('abap_users', []);
+    const cleanUsers = stored.filter(u => !FAKE_USERNAMES.has(u.username));
+    if (cleanUsers.length !== stored.length) {
+      setItem('abap_users', cleanUsers);
+    }
+    const session = getItem<UserProfile | null>('abap_auth_session', null);
+    let activeUser = cleanUsers.find(u => u.is_active) || null;
+    if (session && !FAKE_USERNAMES.has(session.username)) {
+      activeUser = cleanUsers.find(u => u.id === session.id) || session;
+    }
+    return { users: cleanUsers, activeUser };
   },
 
-  async createUser(data: { username: string; display_name: string; role_title: string; avatar_color: string }): Promise<{ success: boolean; user: UserProfile }> {
-    const { users } = this.getUsers();
+  async register(data: RegisterRequest): Promise<AuthResponse> {
     const cleanUsername = data.username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+    if (cleanUsername.length < 3) {
+      throw new Error('Username must be at least 3 characters long (letters, numbers, underscores)');
+    }
+    if (!data.password || data.password.length < 4) {
+      throw new Error('Password must be at least 4 characters long');
+    }
+    if (FAKE_USERNAMES.has(cleanUsername)) {
+      throw new Error('This username is reserved');
+    }
+
+    const { users } = this.getUsers();
+    if (users.some(u => u.username === cleanUsername)) {
+      throw new Error('Username already exists. Please choose another or log in.');
+    }
+
     const cleanDisplay = data.display_name?.trim() || cleanUsername;
     const cleanRole = data.role_title || 'ABAP Developer';
     const cleanAvatar = data.avatar_color || 'indigo';
+    const pwdHash = await hashPasswordClient(data.password);
 
-    // Deactivate previous active users
+    const passwords = getItem<Record<string, string>>('abap_user_passwords', {});
+    passwords[cleanUsername] = pwdHash;
+    setItem('abap_user_passwords', passwords);
+
     users.forEach(u => (u.is_active = false));
 
-    const existing = users.find(u => u.username === cleanUsername);
-    let user: UserProfile;
-    if (existing) {
-      existing.display_name = cleanDisplay;
-      existing.role_title = cleanRole;
-      existing.avatar_color = cleanAvatar;
-      existing.is_active = true;
-      user = existing;
-    } else {
-      user = {
-        id: `usr-${Date.now()}`,
-        username: cleanUsername,
-        display_name: cleanDisplay,
-        role_title: cleanRole,
-        avatar_color: cleanAvatar,
-        xp: 100,
-        streak_days: 1,
-        is_active: true
-      };
-      users.push(user);
-    }
+    const newUser: UserProfile = {
+      id: `usr-${Date.now()}`,
+      username: cleanUsername,
+      display_name: cleanDisplay,
+      role_title: cleanRole,
+      avatar_color: cleanAvatar,
+      xp: 100,
+      streak_days: 1,
+      is_active: true
+    };
+    users.push(newUser);
 
     setItem('abap_users', users);
+    setItem('abap_auth_session', newUser);
     this.updateProfile({ display_name: cleanDisplay, role_title: cleanRole });
 
-    // Sync to Supabase Cloud
     supabaseClient.upsertUser({
-      id: user.id,
-      username: user.username,
-      display_name: user.display_name,
-      role_title: user.role_title,
-      avatar_color: user.avatar_color,
-      xp: user.xp,
-      streak_days: user.streak_days,
+      id: newUser.id,
+      username: newUser.username,
+      display_name: newUser.display_name,
+      role_title: newUser.role_title,
+      avatar_color: newUser.avatar_color,
+      xp: 100,
+      streak_days: 1,
       lessons_completed: 0,
       quizzes_passed: 0,
       challenges_solved: 0,
       mastery_score: 0
     }).catch(() => {});
 
+    return { success: true, user: newUser };
+  },
+
+  async login(data: LoginRequest): Promise<AuthResponse> {
+    const cleanUsername = data.username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const { users } = this.getUsers();
+    const user = users.find(u => u.username === cleanUsername);
+    if (!user) {
+      throw new Error('Invalid username or password');
+    }
+
+    const passwords = getItem<Record<string, string>>('abap_user_passwords', {});
+    const inputHash = await hashPasswordClient(data.password);
+    const storedHash = passwords[cleanUsername];
+
+    if (storedHash && storedHash !== inputHash) {
+      throw new Error('Invalid username or password');
+    } else if (!storedHash) {
+      passwords[cleanUsername] = inputHash;
+      setItem('abap_user_passwords', passwords);
+    }
+
+    users.forEach(u => (u.is_active = u.id === user.id));
+    user.is_active = true;
+    setItem('abap_users', users);
+    setItem('abap_auth_session', user);
+    this.updateProfile({ display_name: user.display_name, role_title: user.role_title });
+    this.syncActiveUser();
+
     return { success: true, user };
+  },
+
+  logout(): { success: boolean } {
+    localStorage.removeItem('abap_auth_session');
+    const { users } = this.getUsers();
+    users.forEach(u => (u.is_active = false));
+    setItem('abap_users', users);
+    return { success: true };
+  },
+
+  getCurrentUser(): UserProfile | null {
+    const { activeUser } = this.getUsers();
+    return activeUser;
+  },
+
+  async createUser(data: { username: string; display_name: string; role_title: string; avatar_color: string }): Promise<{ success: boolean; user: UserProfile }> {
+    return this.register({
+      username: data.username,
+      password: 'defaultPassword123',
+      display_name: data.display_name,
+      role_title: data.role_title,
+      avatar_color: data.avatar_color
+    });
   },
 
   switchUser(userId: string): { success: boolean; activeUser: UserProfile } {
@@ -165,6 +239,7 @@ export const offlineService = {
     setItem('abap_users', users);
     const active = users.find(u => u.id === userId) || users[0];
     if (active) {
+      setItem('abap_auth_session', active);
       this.updateProfile({ display_name: active.display_name, role_title: active.role_title });
       this.syncActiveUser();
     }
@@ -174,7 +249,7 @@ export const offlineService = {
   syncActiveUser() {
     try {
       const { activeUser } = this.getUsers();
-      if (!activeUser) return;
+      if (!activeUser || FAKE_USERNAMES.has(activeUser.username)) return;
       const progress = getItem<Record<string, { status: string }>>('abap_lesson_progress', {});
       const completedLessons = Object.values(progress).filter(p => p.status === 'completed').length;
       const challengeProg = getItem<Record<string, { status: string }>>('abap_challenge_progress', {});
@@ -217,32 +292,29 @@ export const offlineService = {
     const calculatedXP = Math.max(100, (completedLessons * 50) + (quizzesPassed * 40) + (completedChallenges * 150) + (streakDays * 25));
     const masteryScore = Math.min(100, Math.round(((completedLessons / 10) * 40) + ((avgAccuracy / 100) * 30) + ((completedChallenges / 3) * 30)));
 
-    if (activeUser) {
+    if (activeUser && !FAKE_USERNAMES.has(activeUser.username)) {
       activeUser.xp = calculatedXP;
       activeUser.lessons_completed = completedLessons;
       activeUser.quizzes_passed = quizzesPassed;
       activeUser.challenges_solved = completedChallenges;
       activeUser.mastery_score = masteryScore;
+      this.syncActiveUser();
     }
 
-    // Always trigger background sync to Supabase for the active user
-    this.syncActiveUser();
-
-    // Query Supabase Cloud for global platform leaderboard
     let cloudUsers = await supabaseClient.getLeaderboard();
     let cloudSynced = false;
     let finalLeaderboard: any[] = [];
 
     if (cloudUsers && cloudUsers.length > 0) {
       cloudSynced = true;
-      finalLeaderboard = cloudUsers;
+      finalLeaderboard = cloudUsers.filter(u => !FAKE_USERNAMES.has(u.username));
     } else {
-      finalLeaderboard = users.map(u => ({
+      finalLeaderboard = users.filter(u => !FAKE_USERNAMES.has(u.username)).map(u => ({
         ...u,
-        lessons_completed: u.is_active ? completedLessons : Math.max(3, Math.round(u.xp / 180)),
-        quizzes_passed: u.is_active ? quizzesPassed : Math.max(2, Math.round(u.xp / 350)),
-        challenges_solved: u.is_active ? completedChallenges : Math.max(1, Math.round(u.xp / 400)),
-        mastery_score: u.is_active ? masteryScore : Math.min(95, Math.round(u.xp / 36))
+        lessons_completed: u.is_active ? completedLessons : 0,
+        quizzes_passed: u.is_active ? quizzesPassed : 0,
+        challenges_solved: u.is_active ? completedChallenges : 0,
+        mastery_score: u.is_active ? masteryScore : 0
       }));
     }
 
@@ -255,7 +327,7 @@ export const offlineService = {
 
     return {
       leaderboard: ranked,
-      activeUser,
+      activeUser: (activeUser && !FAKE_USERNAMES.has(activeUser.username)) ? activeUser : null,
       cloudSynced,
       totalUsers: ranked.length
     };
@@ -619,48 +691,6 @@ export const offlineService = {
     return { success: true, intervalDays: interval, dueDate: dueDate.toISOString() };
   },
 
-  // 5-Day Sprint
-  getSprintDays(): SprintDay[] {
-    const saved = getItem<Record<number, string[]>>('abap_sprint_tasks', {});
-    return SEED_SPRINT_DAYS.map(day => {
-      const completed = saved[day.day_number] || [];
-      const tasks = typeof (day as any).practice_tasks_json === 'string' ? JSON.parse((day as any).practice_tasks_json) : [];
-      return {
-        day_number: day.day_number,
-        title: day.title,
-        subtitle: day.subtitle,
-        focus_area: day.focus_area,
-        theory_md: day.theory_md,
-        objectives: typeof (day as any).objectives_json === 'string' ? JSON.parse((day as any).objectives_json) : [],
-        practice_tasks: tasks,
-        code_examples: typeof (day as any).code_examples_json === 'string' ? JSON.parse((day as any).code_examples_json) : [],
-        quiz_questions: typeof (day as any).quiz_questions_json === 'string' ? JSON.parse((day as any).quiz_questions_json) : [],
-        revision_points: typeof (day as any).revision_points_json === 'string' ? JSON.parse((day as any).revision_points_json) : [],
-        completion_criteria: typeof (day as any).completion_criteria_json === 'string' ? JSON.parse((day as any).completion_criteria_json) : [],
-        completed_tasks: completed,
-        is_completed: tasks.length > 0 && completed.length === tasks.length
-      };
-    });
-  },
-
-  toggleSprintTask(day: number, taskId: string) {
-    const saved = getItem<Record<number, string[]>>('abap_sprint_tasks', {});
-    const list = saved[day] || [];
-    const idx = list.indexOf(taskId);
-    if (idx >= 0) {
-      list.splice(idx, 1);
-    } else {
-      list.push(taskId);
-    }
-    saved[day] = list;
-    setItem('abap_sprint_tasks', saved);
-
-    const sprintDay = SEED_SPRINT_DAYS.find(d => d.day_number === day);
-    const tasks = sprintDay && typeof (sprintDay as any).practice_tasks_json === 'string' ? JSON.parse((sprintDay as any).practice_tasks_json) : [];
-    const isCompleted = tasks.length > 0 && list.length === tasks.length;
-
-    return { success: true, completedTasks: list, isCompleted };
-  },
 
   // Projects
   getProjects(): Project[] {

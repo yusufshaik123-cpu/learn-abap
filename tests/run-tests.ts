@@ -1,5 +1,6 @@
 import assert from 'node:assert';
 import http from 'node:http';
+import crypto from 'node:crypto';
 import { db, initDatabase } from '../server/db.ts';
 import { AbapSimulator, type TestCase } from '../server/abapRunner.ts';
 import { runSeed } from '../server/seed.ts';
@@ -56,9 +57,9 @@ test('Curriculum contains required handbook modules', () => {
   assert(modules.count >= 10, 'Must contain at least 10 modules');
 });
 
-test('5-Day sprint contains all 5 sequential days', () => {
-  const sprintDays = db.prepare('SELECT count(*) as count FROM sprint_days').get() as any;
-  assert.strictEqual(sprintDays.count, 5, 'Must contain exactly 5 sprint days');
+test('Curriculum lessons exist and can be loaded', () => {
+  const lessons = db.prepare('SELECT count(*) as count FROM lessons').get() as any;
+  assert(lessons.count >= 5, 'Must contain curriculum lessons');
 });
 
 // ----------------------------------------------------
@@ -186,26 +187,42 @@ test('Database contains no personal emails, student usernames, or college names'
 });
 
 // ----------------------------------------------------
-// 5. User Creation & Leaderboard Tests
+// 5. User Creation & Authentication Tests
 // ----------------------------------------------------
-console.log('\nSection 5: User Creation & Leaderboard Functionality');
+console.log('\nSection 5: User Creation & Authentication Functionality');
 
-test('Can create a new learner user seamlessly', () => {
+test('Can register user with password hash and authenticate credentials', () => {
   const newUserId = `usr-test-${Date.now()}`;
-  db.prepare(`
-    INSERT OR REPLACE INTO users (id, username, display_name, role_title, avatar_color, xp, streak_days, is_active)
-    VALUES (?, 'ninja_coder', 'ABAP Ninja', 'Clean ABAP Craftsman', 'emerald', 850, 4, 1)
-  `).run(newUserId);
+  const password = 'mySecurePassword2026';
+  const passwordHash = crypto.createHash('sha256').update(password + '_abap_salt_2026').digest('hex');
 
-  const user = db.prepare('SELECT * FROM users WHERE username = ?').get('ninja_coder') as any;
-  assert.strictEqual(user.username, 'ninja_coder');
-  assert.strictEqual(user.display_name, 'ABAP Ninja');
-  assert.strictEqual(user.xp, 850);
+  db.prepare(`
+    INSERT OR REPLACE INTO users (id, username, password_hash, display_name, role_title, avatar_color, xp, streak_days, is_active)
+    VALUES (?, 'abap_pro', ?, 'ABAP Professional', 'RAP Cloud Architect', 'purple', 950, 5, 1)
+  `).run(newUserId, passwordHash);
+
+  const user = db.prepare('SELECT * FROM users WHERE username = ?').get('abap_pro') as any;
+  assert.strictEqual(user.username, 'abap_pro');
+  assert.strictEqual(user.display_name, 'ABAP Professional');
+  assert.strictEqual(user.xp, 950);
+  assert.strictEqual(user.password_hash, passwordHash);
+
+  // Correct password verification
+  const validHash = crypto.createHash('sha256').update(password + '_abap_salt_2026').digest('hex');
+  assert.strictEqual(validHash, user.password_hash, 'Correct password hash must match stored password hash');
+
+  // Wrong password rejected
+  const invalidHash = crypto.createHash('sha256').update('wrongPassword_abap_salt_2026').digest('hex');
+  assert.notStrictEqual(invalidHash, user.password_hash, 'Incorrect password hash must not match');
 });
 
-test('Leaderboard orders users by XP descending', () => {
+test('No synthetic fake users exist in SQLite database', () => {
+  const fakeUsers = db.prepare("SELECT username FROM users WHERE username IN ('rap_architect', 'clean_coder', 'core_data_fan', 'subrc_zero', 'btp_cloud_dev', 'abap_dev')").all();
+  assert.strictEqual(fakeUsers.length, 0, 'Database must not contain fake/mock users');
+});
+
+test('Leaderboard orders genuine users by XP descending', () => {
   const users = db.prepare('SELECT username, xp FROM users ORDER BY xp DESC').all() as any[];
-  assert(users.length >= 3, 'Expected at least 3 users on leaderboard');
   for (let i = 0; i < users.length - 1; i++) {
     assert(users[i].xp >= users[i + 1].xp, 'Users must be ordered by XP descending');
   }

@@ -195,30 +195,6 @@ export function initDatabase() {
       FOREIGN KEY (project_id) REFERENCES projects(id)
     );
 
-    CREATE TABLE IF NOT EXISTS sprint_days (
-      day_number INTEGER PRIMARY KEY,
-      title TEXT NOT NULL,
-      subtitle TEXT NOT NULL,
-      focus_area TEXT NOT NULL,
-      objectives_json TEXT NOT NULL,
-      theory_md TEXT NOT NULL,
-      code_examples_json TEXT NOT NULL,
-      practice_tasks_json TEXT NOT NULL,
-      quiz_questions_json TEXT NOT NULL,
-      revision_points_json TEXT NOT NULL,
-      completion_criteria_json TEXT NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS user_sprint_progress (
-      day_number INTEGER PRIMARY KEY,
-      is_completed BOOLEAN DEFAULT 0,
-      completed_tasks_json TEXT DEFAULT '[]',
-      quiz_score REAL DEFAULT 0,
-      notes TEXT,
-      completed_at TEXT,
-      FOREIGN KEY (day_number) REFERENCES sprint_days(day_number)
-    );
-
     CREATE TABLE IF NOT EXISTS daily_planner (
       id TEXT PRIMARY KEY,
       date TEXT UNIQUE NOT NULL,
@@ -251,6 +227,7 @@ export function initDatabase() {
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       username TEXT UNIQUE NOT NULL,
+      password_hash TEXT,
       display_name TEXT NOT NULL,
       role_title TEXT DEFAULT 'ABAP Developer',
       avatar_color TEXT DEFAULT 'indigo',
@@ -262,24 +239,17 @@ export function initDatabase() {
     );
   `);
 
-  // Ensure default peer learners exist for the leaderboard
-  const peerCount = (db.prepare('SELECT count(*) as count FROM users').get() as any).count;
-  if (peerCount === 0) {
-    const insertPeer = db.prepare(`
-      INSERT OR REPLACE INTO users (id, username, display_name, role_title, avatar_color, xp, streak_days, is_active)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
+  // Ensure password_hash column exists on legacy users table
+  try {
+    db.prepare('ALTER TABLE users ADD COLUMN password_hash TEXT').run();
+  } catch {}
 
-    // Default primary active user
-    insertPeer.run('usr-me', 'abap_dev', 'Learner', 'ABAP Developer', 'indigo', 350, 2, 1);
-
-    // Competitive community learners
-    insertPeer.run('usr-rap-arch', 'rap_architect', 'Senior RAP Specialist', 'RAP Enterprise Architect', 'purple', 3450, 18, 0);
-    insertPeer.run('usr-clean-abap', 'clean_coder', 'ABAP Craftsman', 'Clean ABAP Lead', 'emerald', 2890, 14, 0);
-    insertPeer.run('usr-cds-wizard', 'core_data_fan', 'CDS Data Modeler', 'SAP S/4HANA Consultant', 'sky', 2150, 9, 0);
-    insertPeer.run('usr-subrc-zero', 'subrc_zero', 'Bug Hunter', 'ABAP Quality Engineer', 'amber', 1780, 7, 0);
-    insertPeer.run('usr-cloud-dev', 'btp_cloud_dev', 'Cloud Extender', 'BTP Developer', 'rose', 1250, 5, 0);
-  }
+  // Purge any legacy mock users and sprint tables
+  try {
+    db.prepare("DELETE FROM users WHERE username IN ('rap_architect', 'clean_coder', 'core_data_fan', 'subrc_zero', 'btp_cloud_dev', 'abap_dev')").run();
+    db.prepare("DROP TABLE IF EXISTS sprint_days").run();
+    db.prepare("DROP TABLE IF EXISTS user_sprint_progress").run();
+  } catch {}
 
   // Ensure default profile exists
   const existingProfile = db.prepare('SELECT id FROM learner_profile LIMIT 1').get();
@@ -290,3 +260,4 @@ export function initDatabase() {
     `).run();
   }
 }
+

@@ -116,27 +116,6 @@ export function runSeed() {
     insertCard.run(fc.id, fc.category, fc.front, fc.back, fc.code_snippet, fc.explanation, fc.mnemonic, fc.difficulty);
   }
 
-  console.log('[Seed] Seeding 5-Day Sprint Days...');
-  const insertSprint = db.prepare(`
-    INSERT OR REPLACE INTO sprint_days (day_number, title, subtitle, focus_area, objectives_json, theory_md, code_examples_json, practice_tasks_json, quiz_questions_json, revision_points_json, completion_criteria_json)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `);
-  for (const sp of SEED_SPRINT_DAYS) {
-    insertSprint.run(
-      sp.day_number,
-      sp.title,
-      sp.subtitle,
-      sp.focus_area,
-      sp.objectives_json,
-      sp.theory_md,
-      sp.code_examples_json,
-      sp.practice_tasks_json,
-      sp.quiz_questions_json,
-      sp.revision_points_json,
-      sp.completion_criteria_json
-    );
-  }
-
   console.log('[Seed] Seeding Projects...');
   const insertProject = db.prepare(`
     INSERT OR REPLACE INTO projects (id, title, level, order_index, description, objectives_json, prerequisites_json, functional_reqs_json, data_model, milestones_json, test_scenarios_json, checklist_json, concepts_learned_json, extensions_json, is_sandbox_compatible)

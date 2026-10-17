@@ -40,13 +40,3 @@ create policy "Allow anon update"
   for update
   using (true)
   with check (true);
-
--- Initial Seed Data for Global Platform Leaderboard
-insert into public.leaderboard (id, username, display_name, role_title, avatar_color, xp, streak_days, lessons_completed, quizzes_passed, challenges_solved, mastery_score)
-values
-  ('usr-rap-arch', 'rap_architect', 'Senior RAP Specialist', 'RAP Enterprise Architect', 'purple', 3450, 18, 16, 8, 8, 92),
-  ('usr-clean-abap', 'clean_coder', 'ABAP Craftsman', 'Clean ABAP Lead', 'emerald', 2890, 14, 14, 7, 6, 84),
-  ('usr-cds-wizard', 'core_data_fan', 'CDS Data Modeler', 'SAP S/4HANA Consultant', 'sky', 2150, 9, 11, 5, 5, 75),
-  ('usr-subrc-zero', 'subrc_zero', 'Bug Hunter', 'ABAP Quality Engineer', 'amber', 1780, 7, 9, 4, 4, 68),
-  ('usr-cloud-dev', 'btp_cloud_dev', 'Cloud Extender', 'BTP Developer', 'indigo', 1250, 5, 6, 3, 3, 55)
-on conflict (username) do nothing;

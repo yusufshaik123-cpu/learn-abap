@@ -43,7 +43,9 @@ export const supabase = {
         // Table might not be created in Supabase yet
         return null;
       }
-      return await res.json();
+      const data = await res.json();
+      const FAKE_USERNAMES = new Set(['rap_architect', 'clean_coder', 'core_data_fan', 'subrc_zero', 'btp_cloud_dev', 'abap_dev']);
+      return Array.isArray(data) ? data.filter((u: any) => !FAKE_USERNAMES.has(u.username)) : [];
     } catch (err) {
       // Offline or network error - gracefully return null to use local SQLite
       return null;

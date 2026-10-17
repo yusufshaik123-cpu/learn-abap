@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import crypto from 'node:crypto';
 import { db, initDatabase } from './db.ts';
 import { AbapSimulator, type TestCase } from './abapRunner.ts';
 
@@ -16,13 +17,143 @@ const simulator = new AbapSimulator();
 
 import { supabase } from './supabase.ts';
 
+function hashPassword(password: string): string {
+  return crypto.createHash('sha256').update(password + '_abap_salt_2026').digest('hex');
+}
+
+const FAKE_USERNAMES = new Set(['rap_architect', 'clean_coder', 'core_data_fan', 'subrc_zero', 'btp_cloud_dev', 'abap_dev']);
+
 // ==========================================
-// 1. Learner Profile & User Management
+// 1. Authentication & Learner Profile
 // ==========================================
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { username, password, display_name, role_title, avatar_color } = req.body;
+    if (!username || !username.trim()) {
+      return res.status(400).json({ error: 'Username is required' });
+    }
+    const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+    if (cleanUsername.length < 3) {
+      return res.status(400).json({ error: 'Username must be at least 3 characters long (letters, numbers, underscores)' });
+    }
+    if (!password || password.length < 4) {
+      return res.status(400).json({ error: 'Password must be at least 4 characters long' });
+    }
+    if (FAKE_USERNAMES.has(cleanUsername)) {
+      return res.status(400).json({ error: 'This username is reserved' });
+    }
+
+    const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(cleanUsername);
+    if (existing) {
+      return res.status(400).json({ error: 'Username already taken. Please choose another username or log in.' });
+    }
+
+    const cleanDisplay = display_name?.trim() || cleanUsername;
+    const cleanRole = role_title || 'ABAP Developer';
+    const cleanAvatar = avatar_color || 'indigo';
+    const passwordHash = hashPassword(password);
+    const userId = `usr-${Date.now()}`;
+
+    // Deactivate previous active users and insert genuine registered user
+    db.prepare('UPDATE users SET is_active = 0').run();
+    db.prepare(`
+      INSERT INTO users (id, username, password_hash, display_name, role_title, avatar_color, xp, streak_days, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, 100, 1, 1)
+    `).run(userId, cleanUsername, passwordHash, cleanDisplay, cleanRole, cleanAvatar);
+
+    db.prepare(`
+      UPDATE learner_profile
+      SET display_name = ?, role_title = ?, updated_at = datetime('now')
+      WHERE id = 'default'
+    `).run(cleanDisplay, cleanRole);
+
+    const newUser = db.prepare('SELECT id, username, display_name, role_title, avatar_color, xp, streak_days, is_active FROM users WHERE username = ?').get(cleanUsername) as any;
+
+    supabase.upsertUser({
+      id: newUser.id,
+      username: newUser.username,
+      display_name: newUser.display_name,
+      role_title: newUser.role_title,
+      avatar_color: newUser.avatar_color,
+      xp: 100,
+      streak_days: 1,
+      lessons_completed: 0,
+      quizzes_passed: 0,
+      challenges_solved: 0,
+      mastery_score: 0
+    }).catch(() => {});
+
+    res.json({ success: true, user: newUser });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
+    }
+    const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(cleanUsername) as any;
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+
+    if (user.password_hash) {
+      const inputHash = hashPassword(password);
+      if (inputHash !== user.password_hash) {
+        return res.status(401).json({ error: 'Invalid username or password' });
+      }
+    } else {
+      const newHash = hashPassword(password);
+      db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(newHash, user.id);
+    }
+
+    // Set active
+    db.prepare('UPDATE users SET is_active = 0').run();
+    db.prepare('UPDATE users SET is_active = 1 WHERE id = ?').run(user.id);
+
+    db.prepare(`
+      UPDATE learner_profile
+      SET display_name = ?, role_title = ?, updated_at = datetime('now')
+      WHERE id = 'default'
+    `).run(user.display_name, user.role_title);
+
+    const activeUser = db.prepare('SELECT id, username, display_name, role_title, avatar_color, xp, streak_days, is_active FROM users WHERE id = ?').get(user.id) as any;
+    res.json({ success: true, user: activeUser });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/auth/me', (req, res) => {
+  try {
+    const rawUser = db.prepare('SELECT id, username, display_name, role_title, avatar_color, xp, streak_days, is_active FROM users WHERE is_active = 1 LIMIT 1').get() as any;
+    if (rawUser && FAKE_USERNAMES.has(rawUser.username)) {
+      return res.json({ user: null });
+    }
+    res.json({ user: rawUser || null });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  try {
+    db.prepare('UPDATE users SET is_active = 0').run();
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/users', (req, res) => {
   try {
-    const users = db.prepare('SELECT * FROM users ORDER BY is_active DESC, xp DESC').all() as any[];
-    const activeUser = users.find(u => u.is_active === 1) || users[0] || null;
+    const rawUsers = db.prepare('SELECT id, username, display_name, role_title, avatar_color, xp, streak_days, is_active FROM users ORDER BY is_active DESC, xp DESC').all() as any[];
+    const users = rawUsers.filter(u => !FAKE_USERNAMES.has(u.username));
+    const activeUser = users.find(u => u.is_active === 1) || null;
     res.json({ users, activeUser });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -31,17 +162,24 @@ app.get('/api/users', (req, res) => {
 
 app.post('/api/users', async (req, res) => {
   try {
-    const { username, display_name, role_title, avatar_color } = req.body;
+    const { username, password, display_name, role_title, avatar_color } = req.body;
     if (!username || !username.trim()) {
       return res.status(400).json({ error: 'Username is required' });
     }
 
     const cleanUsername = username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+    if (cleanUsername.length < 3) {
+      return res.status(400).json({ error: 'Username must be at least 3 characters long' });
+    }
+    if (FAKE_USERNAMES.has(cleanUsername)) {
+      return res.status(400).json({ error: 'This username is reserved' });
+    }
+
     const cleanDisplay = display_name?.trim() || cleanUsername;
     const cleanRole = role_title || 'ABAP Developer';
     const cleanAvatar = avatar_color || 'indigo';
+    const passwordHash = password ? hashPassword(password) : hashPassword('abap1234');
 
-    // Calculate current user's real stats
     const completedLessons = (db.prepare("SELECT count(*) as count FROM user_lesson_progress WHERE status = 'completed'").get() as any).count;
     const completedChallenges = (db.prepare("SELECT count(*) as count FROM user_challenge_progress WHERE status = 'completed'").get() as any).count;
     const quizStats = db.prepare('SELECT COUNT(*) as attempts, AVG(percentage) as accuracy FROM quiz_attempts').get() as any;
@@ -51,36 +189,31 @@ app.post('/api/users', async (req, res) => {
     const profile = db.prepare('SELECT streak_days FROM learner_profile WHERE id = ?').get('default') as any;
     const streakDays = profile?.streak_days || 1;
 
-    // Calculate XP
     const xp = Math.max(100, (completedLessons * 50) + (quizzesPassed * 40) + (completedChallenges * 150) + (streakDays * 25));
     const masteryScore = Math.min(100, Math.round(((completedLessons / 10) * 40) + ((avgAccuracy / 100) * 30) + ((completedChallenges / 3) * 30)));
 
     const userId = `usr-${Date.now()}`;
 
-    // Deactivate previous active users
     db.prepare('UPDATE users SET is_active = 0').run();
-
-    // Insert new user
     db.prepare(`
-      INSERT INTO users (id, username, display_name, role_title, avatar_color, xp, streak_days, is_active)
-      VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+      INSERT INTO users (id, username, password_hash, display_name, role_title, avatar_color, xp, streak_days, is_active)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
       ON CONFLICT(username) DO UPDATE SET
+        password_hash = excluded.password_hash,
         display_name = excluded.display_name,
         role_title = excluded.role_title,
         avatar_color = excluded.avatar_color,
         is_active = 1
-    `).run(userId, cleanUsername, cleanDisplay, cleanRole, cleanAvatar, xp, streakDays);
+    `).run(userId, cleanUsername, passwordHash, cleanDisplay, cleanRole, cleanAvatar, xp, streakDays);
 
-    // Update learner profile table to match
     db.prepare(`
       UPDATE learner_profile
       SET display_name = ?, role_title = ?, updated_at = datetime('now')
       WHERE id = 'default'
     `).run(cleanDisplay, cleanRole);
 
-    const newUser = db.prepare('SELECT * FROM users WHERE username = ?').get(cleanUsername) as any;
+    const newUser = db.prepare('SELECT id, username, display_name, role_title, avatar_color, xp, streak_days, is_active FROM users WHERE username = ?').get(cleanUsername) as any;
 
-    // Try cloud sync with Supabase in background
     supabase.upsertUser({
       id: newUser.id,
       username: newUser.username,
@@ -107,7 +240,7 @@ app.post('/api/users/switch', (req, res) => {
     db.prepare('UPDATE users SET is_active = 0').run();
     db.prepare('UPDATE users SET is_active = 1 WHERE id = ?').run(userId);
 
-    const activeUser = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as any;
+    const activeUser = db.prepare('SELECT id, username, display_name, role_title, avatar_color, xp, streak_days, is_active FROM users WHERE id = ?').get(userId) as any;
     if (activeUser) {
       db.prepare(`
         UPDATE learner_profile
@@ -123,25 +256,23 @@ app.post('/api/users/switch', (req, res) => {
 });
 
 // ==========================================
-// 1b. Leaderboard API with Supabase Sync
+// 1b. Leaderboard API with Supabase Sync (Real Users Only)
 // ==========================================
 app.get('/api/leaderboard', async (req, res) => {
   try {
-    // 1. Calculate active user's current live stats
     const completedLessons = (db.prepare("SELECT count(*) as count FROM user_lesson_progress WHERE status = 'completed'").get() as any).count;
     const completedChallenges = (db.prepare("SELECT count(*) as count FROM user_challenge_progress WHERE status = 'completed'").get() as any).count;
     const quizzesPassed = (db.prepare("SELECT count(*) as count FROM quiz_attempts WHERE passed = 1").get() as any).count;
     const quizStats = db.prepare('SELECT AVG(percentage) as accuracy FROM quiz_attempts').get() as any;
     const avgAccuracy = Math.round(quizStats?.accuracy || 0);
 
-    const activeUser = db.prepare('SELECT * FROM users WHERE is_active = 1 LIMIT 1').get() as any;
+    const activeUser = db.prepare('SELECT id, username, display_name, role_title, avatar_color, xp, streak_days, is_active FROM users WHERE is_active = 1 LIMIT 1').get() as any;
     const streakDays = activeUser?.streak_days || 1;
 
-    // Calculate XP: Lessons: 50 XP, Quizzes: 40 XP, Challenges: 150 XP, Streak: 25 XP/day
     const calculatedXP = Math.max(100, (completedLessons * 50) + (quizzesPassed * 40) + (completedChallenges * 150) + (streakDays * 25));
     const masteryScore = Math.min(100, Math.round(((completedLessons / 10) * 40) + ((avgAccuracy / 100) * 30) + ((completedChallenges / 3) * 30)));
 
-    if (activeUser) {
+    if (activeUser && !FAKE_USERNAMES.has(activeUser.username)) {
       db.prepare('UPDATE users SET xp = ?, updated_at = datetime(\'now\') WHERE id = ?').run(calculatedXP, activeUser.id);
       activeUser.xp = calculatedXP;
       activeUser.lessons_completed = completedLessons;
@@ -149,7 +280,6 @@ app.get('/api/leaderboard', async (req, res) => {
       activeUser.challenges_solved = completedChallenges;
       activeUser.mastery_score = masteryScore;
 
-      // Sync active user to Supabase
       supabase.upsertUser({
         id: activeUser.id,
         username: activeUser.username,
@@ -165,28 +295,24 @@ app.get('/api/leaderboard', async (req, res) => {
       }).catch(() => {});
     }
 
-    // 2. Attempt fetching global leaderboard from Supabase
     let cloudUsers = await supabase.getLeaderboard();
     let cloudSynced = false;
-
     let finalLeaderboard: any[] = [];
 
     if (cloudUsers && cloudUsers.length > 0) {
       cloudSynced = true;
-      finalLeaderboard = cloudUsers;
+      finalLeaderboard = cloudUsers.filter(u => !FAKE_USERNAMES.has(u.username));
     } else {
-      // Fallback to local SQLite database users
-      const localUsers = db.prepare('SELECT * FROM users ORDER BY xp DESC').all() as any[];
-      finalLeaderboard = localUsers.map((u, idx) => ({
+      const localUsers = db.prepare('SELECT id, username, display_name, role_title, avatar_color, xp, streak_days, is_active FROM users ORDER BY xp DESC').all() as any[];
+      finalLeaderboard = localUsers.filter(u => !FAKE_USERNAMES.has(u.username)).map((u) => ({
         ...u,
-        lessons_completed: u.is_active ? completedLessons : Math.max(3, Math.round(u.xp / 180)),
-        quizzes_passed: u.is_active ? quizzesPassed : Math.max(2, Math.round(u.xp / 350)),
-        challenges_solved: u.is_active ? completedChallenges : Math.max(1, Math.round(u.xp / 400)),
-        mastery_score: u.is_active ? masteryScore : Math.min(95, Math.round(u.xp / 36))
+        lessons_completed: u.is_active ? completedLessons : 0,
+        quizzes_passed: u.is_active ? quizzesPassed : 0,
+        challenges_solved: u.is_active ? completedChallenges : 0,
+        mastery_score: u.is_active ? masteryScore : 0
       }));
     }
 
-    // Sort by XP descending and attach ranks
     finalLeaderboard.sort((a, b) => b.xp - a.xp);
     const rankedLeaderboard = finalLeaderboard.map((item, index) => ({
       ...item,
@@ -196,7 +322,7 @@ app.get('/api/leaderboard', async (req, res) => {
 
     res.json({
       leaderboard: rankedLeaderboard,
-      activeUser,
+      activeUser: (activeUser && !FAKE_USERNAMES.has(activeUser.username)) ? activeUser : null,
       cloudSynced,
       totalUsers: rankedLeaderboard.length
     });
@@ -733,76 +859,7 @@ app.post('/api/flashcards/:id/review', (req, res) => {
 });
 
 // ==========================================
-// 7. 5-Day Intensive Sprint
-// ==========================================
-app.get('/api/sprint', (req, res) => {
-  try {
-    const sprintDays = db.prepare(`
-      SELECT s.*,
-             COALESCE(p.is_completed, 0) as is_completed,
-             COALESCE(p.completed_tasks_json, '[]') as completed_tasks,
-             COALESCE(p.quiz_score, 0) as quiz_score,
-             p.completed_at
-      FROM sprint_days s
-      LEFT JOIN user_sprint_progress p ON s.day_number = p.day_number
-      ORDER BY s.day_number ASC
-    `).all() as any[];
-
-    const parsed = sprintDays.map(sd => ({
-      ...sd,
-      objectives: JSON.parse(sd.objectives_json),
-      code_examples: JSON.parse(sd.code_examples_json),
-      practice_tasks: JSON.parse(sd.practice_tasks_json),
-      quiz_questions: JSON.parse(sd.quiz_questions_json),
-      revision_points: JSON.parse(sd.revision_points_json),
-      completion_criteria: JSON.parse(sd.completion_criteria_json),
-      completed_tasks: JSON.parse(sd.completed_tasks)
-    }));
-
-    res.json(parsed);
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/sprint/:day/toggle-task', (req, res) => {
-  try {
-    const dayNumber = Number(req.params.day);
-    const { taskId } = req.body;
-
-    const current = db.prepare('SELECT completed_tasks_json FROM user_sprint_progress WHERE day_number = ?').get(dayNumber) as any;
-    let completedTasks: string[] = current ? JSON.parse(current.completed_tasks_json) : [];
-
-    if (completedTasks.includes(taskId)) {
-      completedTasks = completedTasks.filter(id => id !== taskId);
-    } else {
-      completedTasks.push(taskId);
-    }
-
-    const day = db.prepare('SELECT practice_tasks_json FROM sprint_days WHERE day_number = ?').get(dayNumber) as any;
-    const allTasks: any[] = day ? JSON.parse(day.practice_tasks_json) : [];
-    const isCompleted = allTasks.length > 0 && completedTasks.length >= allTasks.length;
-
-    db.prepare(`
-      INSERT INTO user_sprint_progress (day_number, completed_tasks_json, is_completed, completed_at)
-      VALUES (?, ?, ?, CASE WHEN ? = 1 THEN datetime('now') ELSE NULL END)
-      ON CONFLICT(day_number) DO UPDATE SET
-        completed_tasks_json = ?,
-        is_completed = ?,
-        completed_at = CASE WHEN ? = 1 THEN datetime('now') ELSE completed_at END
-    `).run(
-      dayNumber, JSON.stringify(completedTasks), isCompleted ? 1 : 0, isCompleted ? 1 : 0,
-      JSON.stringify(completedTasks), isCompleted ? 1 : 0, isCompleted ? 1 : 0
-    );
-
-    res.json({ success: true, completedTasks, isCompleted });
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ==========================================
-// 8. Projects & Capstones
+// 7. Projects & Capstones
 // ==========================================
 app.get('/api/projects', (req, res) => {
   try {
@@ -1153,7 +1210,6 @@ app.get('/api/backup/export', (req, res) => {
     const challengeProgress = db.prepare('SELECT * FROM user_challenge_progress').all();
     const quizAttempts = db.prepare('SELECT * FROM quiz_attempts').all();
     const cardProgress = db.prepare('SELECT * FROM user_card_progress').all();
-    const sprintProgress = db.prepare('SELECT * FROM user_sprint_progress').all();
     const projectProgress = db.prepare('SELECT * FROM user_project_progress').all();
     const notes = db.prepare('SELECT * FROM personal_notes').all();
     const studySessions = db.prepare('SELECT * FROM study_sessions').all();
@@ -1169,7 +1225,6 @@ app.get('/api/backup/export', (req, res) => {
         challengeProgress,
         quizAttempts,
         cardProgress,
-        sprintProgress,
         projectProgress,
         notes,
         studySessions
@@ -1223,6 +1278,6 @@ if (fs.existsSync(distPath)) {
   });
 }
 
-app.listen(Number(PORT), '127.0.0.1', () => {
-  console.log(`[ABAP Mastery API] Server running on http://127.0.0.1:${PORT}`);
+app.listen(Number(PORT), () => {
+  console.log(`[ABAP Mastery API] Server running on http://localhost:${PORT}`);
 });

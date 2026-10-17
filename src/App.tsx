@@ -10,7 +10,6 @@ import { LessonReaderPage } from './pages/LessonReaderPage';
 import { QuizCenterPage } from './pages/QuizCenterPage';
 import { CodingPracticePage } from './pages/CodingPracticePage';
 import { FlashcardsPage } from './pages/FlashcardsPage';
-import { SprintPage } from './pages/SprintPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { PlannerPage } from './pages/PlannerPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
@@ -31,15 +30,22 @@ export const App: React.FC = () => {
   useEffect(() => {
     async function init() {
       try {
-        const [p, u] = await Promise.all([
+        const [p, u, me] = await Promise.all([
           api.getProfile(),
-          api.getUsers()
+          api.getUsers(),
+          api.getCurrentUser()
         ]);
         setProfile(p);
         setUsers(u.users);
-        setActiveUser(u.activeUser);
+        const resolved = me || u.activeUser;
+        setActiveUser(resolved);
+        // If unauthenticated, gate the app until account is created or logged into
+        if (!resolved) {
+          setIsUserModalOpen(true);
+        }
       } catch (err) {
         console.error('Failed to load profile and users', err);
+        setIsUserModalOpen(true);
       }
     }
     init();
@@ -59,13 +65,22 @@ export const App: React.FC = () => {
 
   const handleUserChanged = (user: UserProfile) => {
     setActiveUser(user);
-    setUsers(prev => {
-      const exists = prev.some(u => u.id === user.id);
-      if (exists) {
-        return prev.map(u => ({ ...u, is_active: u.id === user.id }));
-      }
-      return [user, ...prev.map(u => ({ ...u, is_active: false }))];
-    });
+    if (user) {
+      setIsUserModalOpen(false);
+      setUsers(prev => {
+        const exists = prev.some(u => u.id === user.id);
+        if (exists) {
+          return prev.map(u => ({ ...u, is_active: u.id === user.id }));
+        }
+        return [user, ...prev.map(u => ({ ...u, is_active: false }))];
+      });
+    }
+  };
+
+  const handleLogout = async () => {
+    await api.logout();
+    setActiveUser(null);
+    setIsUserModalOpen(true);
   };
 
   return (
@@ -97,7 +112,6 @@ export const App: React.FC = () => {
               <Route path="/quizzes" element={<QuizCenterPage />} />
               <Route path="/practice" element={<CodingPracticePage />} />
               <Route path="/flashcards" element={<FlashcardsPage />} />
-              <Route path="/sprint" element={<SprintPage />} />
               <Route path="/projects" element={<ProjectsPage />} />
               <Route path="/planner" element={<PlannerPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
@@ -112,13 +126,16 @@ export const App: React.FC = () => {
           onClose={() => setIsSearchOpen(false)}
         />
 
-        {/* User Account / Profile Creation & Switcher Modal */}
+        {/* Mandatory User Authentication & Profile Modal */}
         <UserModal
-          isOpen={isUserModalOpen}
-          onClose={() => setIsUserModalOpen(false)}
+          isOpen={isUserModalOpen || !activeUser}
+          onClose={() => {
+            if (activeUser) setIsUserModalOpen(false);
+          }}
           activeUser={activeUser}
           users={users}
           onUserChanged={handleUserChanged}
+          onLogout={handleLogout}
         />
       </div>
     </BrowserRouter>

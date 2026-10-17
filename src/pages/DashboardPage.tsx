@@ -228,24 +228,24 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right 1 Col: 5-Day Sprint & Quick Planner Callout */}
+        {/* Right 1 Col: Hands-on Practice Callout */}
         <div className="space-y-4">
-          <div className="p-5 rounded-2xl border border-amber-500/30 bg-gradient-to-br from-amber-950/20 via-slate-900 to-slate-950 space-y-3 shadow-lg">
-            <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
-              <Zap className="w-4 h-4 fill-amber-400" />
-              <span>5-Day ABAP Sprint</span>
+          <div className="p-5 rounded-2xl border border-indigo-500/30 bg-gradient-to-br from-indigo-950/30 via-slate-900 to-slate-950 space-y-3 shadow-lg">
+            <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold uppercase tracking-wider font-mono">
+              <Code2 className="w-4 h-4" />
+              <span>Coding Practice & Lab</span>
             </div>
             <h3 className="text-sm font-bold text-slate-100">
-              Need to ramp up rapidly?
+              Interactive ABAP Sandbox
             </h3>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Complete the structured sprint covering ABAP fundamentals, internal tables, debugging, OOP, and RAP architecture.
+              Solve hands-on challenges with automated evaluation, test cases, and simulated ABAP runtime execution.
             </p>
             <Link
-              to="/sprint"
-              className="w-full py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-2 transition-colors"
+              to="/practice"
+              className="w-full py-2 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs flex items-center justify-center gap-2 transition-colors"
             >
-              <span>Launch 5-Day Sprint</span>
+              <span>Launch Practice Lab</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>

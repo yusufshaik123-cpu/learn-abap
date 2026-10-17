@@ -9,11 +9,13 @@ import type {
   Challenge,
   ExecutionResult,
   Flashcard,
-  SprintDay,
   Project,
   PersonalNote,
   Bookmark,
-  AnalyticsData
+  AnalyticsData,
+  AuthResponse,
+  RegisterRequest,
+  LoginRequest
 } from './types';
 import { offlineService } from './offlineService';
 
@@ -35,7 +37,49 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  // Users & Leaderboard
+  // Authentication & Users
+  register: async (data: RegisterRequest): Promise<AuthResponse> => {
+    try {
+      const res = await fetchJson<AuthResponse>('/auth/register', { method: 'POST', body: JSON.stringify(data) });
+      if (res.user) {
+        localStorage.setItem('abap_auth_session', JSON.stringify(res.user));
+      }
+      return res;
+    } catch {
+      return offlineService.register(data);
+    }
+  },
+
+  login: async (data: LoginRequest): Promise<AuthResponse> => {
+    try {
+      const res = await fetchJson<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify(data) });
+      if (res.user) {
+        localStorage.setItem('abap_auth_session', JSON.stringify(res.user));
+      }
+      return res;
+    } catch {
+      return offlineService.login(data);
+    }
+  },
+
+  getCurrentUser: async (): Promise<UserProfile | null> => {
+    try {
+      const res = await fetchJson<{ user: UserProfile | null }>('/auth/me');
+      return res.user;
+    } catch {
+      return offlineService.getCurrentUser();
+    }
+  },
+
+  logout: async (): Promise<{ success: boolean }> => {
+    try {
+      localStorage.removeItem('abap_auth_session');
+      return await fetchJson<{ success: boolean }>('/auth/logout', { method: 'POST' });
+    } catch {
+      return offlineService.logout();
+    }
+  },
+
   getUsers: async (): Promise<{ users: UserProfile[]; activeUser: UserProfile | null }> => {
     try {
       return await fetchJson<{ users: UserProfile[]; activeUser: UserProfile | null }>('/users');
@@ -220,25 +264,6 @@ export const api = {
     }
   },
 
-  // 5-Day Sprint
-  getSprintDays: async (): Promise<SprintDay[]> => {
-    try {
-      return await fetchJson<SprintDay[]>('/sprint');
-    } catch {
-      return offlineService.getSprintDays();
-    }
-  },
-
-  toggleSprintTask: async (day: number, taskId: string) => {
-    try {
-      return await fetchJson<{ success: boolean; completedTasks: string[]; isCompleted: boolean }>(`/sprint/${day}/toggle-task`, {
-        method: 'POST',
-        body: JSON.stringify({ taskId })
-      });
-    } catch {
-      return offlineService.toggleSprintTask(day, taskId);
-    }
-  },
 
   // Projects
   getProjects: async (): Promise<Project[]> => {

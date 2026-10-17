@@ -226,6 +226,19 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onOpenUserModa
         </div>
       )}
 
+      {/* Verified Genuine Notice when few users */}
+      {users.length < 3 && (
+        <div className="p-4 rounded-2xl bg-indigo-950/20 border border-indigo-500/20 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold shrink-0">
+            <Shield className="w-4 h-4" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-slate-200">100% Genuine Platform Rankings</h4>
+            <p className="text-[11px] text-slate-400">All synthetic profiles and mock leaderboard entries have been permanently purged. Only verified accounts with real earned XP appear here.</p>
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
         {[
@@ -263,6 +276,17 @@ export const LeaderboardPage: React.FC<LeaderboardPageProps> = ({ onOpenUserModa
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/80 font-mono">
+              {users.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-slate-500 font-sans">
+                    <Trophy className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-50" />
+                    <p className="font-semibold text-sm text-slate-300">No Registered Learners Yet</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      No synthetic bots or fake profiles. Create an account to become the first registered champion on the leaderboard!
+                    </p>
+                  </td>
+                </tr>
+              )}
               {users.map((u, idx) => {
                 const isCurrent = u.isCurrentUser || u.id === activeUser?.id;
                 const rankNum = idx + 1;

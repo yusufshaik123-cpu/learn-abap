@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ABAP Mastery</string>
+    <string name="title_activity_main">ABAP Mastery</string>
+    <string name="package_name">com.abapmastery.app</string>
+    <string name="custom_url_scheme">com.abapmastery.app</string>
+</resources>

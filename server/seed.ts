@@ -6,7 +6,6 @@ import {
   SEED_CHALLENGES,
   SEED_QUIZZES,
   SEED_FLASHCARDS,
-  SEED_SPRINT_DAYS,
   SEED_PROJECTS
 } from './seedData.ts';
 

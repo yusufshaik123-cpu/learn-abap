@@ -2,7 +2,7 @@
  * Seed Curriculum and Question Bank Data for ABAP Mastery
  *
  * Sources:
- * - SAP S4D400 (Basic ABAP Programming Participant Handbook, course version 24)
+ * - SAP S4D400 (Basic ABAP Programming Participant Handbook)
  * - SAP Clean ABAP Guidelines
  * - SAP BTP RAP (RESTful Application Programming Model) Documentation
  */
@@ -224,879 +224,1004 @@ export const SEED_MODULES = [
 
 export const SEED_LESSONS = [
   {
-    id: 'les-fnd-01',
-    module_id: 'mod-fnd-1',
-    title: 'SAP ABAP Runtime & ADT Ecosystem',
-    order_index: 1,
-    estimated_mins: 25,
-    prerequisites: 'Basic programming concept familiarity',
-    objectives: 'Understand the SAP NetWeaver / S/4HANA application server architecture, work process execution, and using Eclipse ADT as the modern development workbench.',
-    is_core: 1,
-    handbook_unit: 'S4D400 Unit 1: Getting Started with ABAP',
-    summary: 'The ABAP runtime operates on an application server layer decoupled from the underlying database. ABAP Development Tools (ADT) in Eclipse has superseded SAP GUI SE38/SE80 for modern development.',
-    key_takeaways: '- The ABAP kernel executes byte-code in work processes (Dialog, Background, Update).\n- Modern development is conducted exclusively in ABAP Development Tools (ADT) on Eclipse.\n- Programs, classes, and dictionary objects belong to Transportable Packages (e.g. Z... or Y...) or local package $TMP.\n- Database independence is maintained via Open SQL / ABAP SQL.',
-    content_json: JSON.stringify({
-      sections: [
-        {
-          title: 'The ABAP Runtime Environment Architecture',
-          content: 'The SAP system architecture follows a three-tier model: Presentation Layer (SAP GUI, Fiori Web browser), Application Layer (ABAP Application Server), and Database Layer (SAP HANA, AnyDB). In this runtime, programs do not execute machine code directly; instead, the ABAP compiler generates byte-code interpreted by the ABAP Virtual Machine inside dialog work processes (DIA).',
-          callout: {
-            type: 'info',
-            text: 'Handbook Note: In S4D400 Unit 1, learners explore how ADT connects via RFC/REST to the SAP backend. No local compilation happens on your PC; ADT sends source code to the server, which compiles and activates it.'
-          }
-        },
-        {
-          title: 'ABAP Development Tools (ADT) vs Classic SE38/SE80',
-          content: 'While historical ABAP development utilized the transaction SE38 (ABAP Editor) or SE80 (Object Navigator) inside the SAP GUI, modern ABAP in S/4HANA and BTP requires ADT. ADT features fast code-completion, syntax checking as you type, refactoring tools, quick fixes (Ctrl+1), and direct support for Core Data Services (CDS) and RAP behavior definitions.',
-          codeSnippet: {
-            language: 'abap',
-            title: 'Modern ABAP Console Class Structure',
-            code: `CLASS zcl_demo_hello DEFINITION
-  PUBLIC
-  FINAL
-  CREATE PUBLIC.
-
-  PUBLIC SECTION.
-    INTERFACES if_oo_adt_classrun.
-  PROTECTED SECTION.
-  PRIVATE SECTION.
-ENDCLASS.
-
-CLASS zcl_demo_hello IMPLEMENTATION.
-  METHOD if_oo_adt_classrun~main.
-    out->write( 'Hello, ABAP Mastery!' ).
-  ENDMETHOD.
-ENDCLASS.`,
-            expectedOutput: 'Hello, ABAP Mastery!'
-          }
-        },
-        {
-          title: 'Common Mistakes & Fixes',
-          mistakes: [
-            {
-              mistake: 'Trying to create CDS Views or RAP Behavior definitions inside SAP GUI SE80/SE38.',
-              correction: 'CDS views and RAP objects are only supported in ADT (Eclipse). Always use ADT for modern artifacts.'
-            },
-            {
-              mistake: 'Saving development objects in $TMP when they need to be transported to QA/Production.',
-              correction: 'Objects in package $TMP are local and cannot be attached to a Transport Request (TR). Create a custom package (e.g. Z_MASTER) and assign a valid transport layer.'
-            }
-          ]
-        }
-      ],
-      knowledgeCheck: {
-        question: 'Which interface allows an ABAP class to be executed directly in ADT via F9 (Run as ABAP Application)?',
-        options: [
-          'if_serializable_object',
-          'if_oo_adt_classrun',
-          'if_amdp_marker_hdb',
-          'if_t100_message'
-        ],
-        correctAnswer: 'if_oo_adt_classrun',
-        explanation: 'Implementing if_oo_adt_classrun provides the main( ) method with the out parameter for console execution in ADT.'
-      }
-    })
+    "id": "les-fnd-01",
+    "module_id": "mod-fnd-1",
+    "title": "SAP ABAP Runtime & ADT Ecosystem",
+    "order_index": 1,
+    "estimated_mins": 35,
+    "prerequisites": "Basic understanding of client-server software architecture.",
+    "objectives": "Understand the ABAP application server execution flow, dialog work processes, active vs inactive object states, and how ADT communicates with the SAP backend.",
+    "is_core": 1,
+    "handbook_unit": "S4D400 Unit 1: Introduction to ABAP Development",
+    "summary": "The ABAP runtime environment executes compiled byte-code inside virtual machine work processes. ADT on Eclipse serves as the primary modern development environment, communicating via RFC/REST.",
+    "key_takeaways": "1. ABAP compiles to byte-code executed by the ABAP Virtual Machine.\n2. Eclipse ADT connects to the server; local compilation does not occur.\n3. Activating an object creates a new runtime version without breaking currently running user sessions.",
+    "content_json": "{\"sections\":[{\"title\":\"The ABAP Runtime Environment Architecture\",\"content\":\"The SAP system architecture follows a three-tier model: Presentation Layer (SAP GUI, Fiori Web browser), Application Layer (ABAP Application Server), and Database Layer (SAP HANA, AnyDB). In this runtime, programs do not execute machine code directly; instead, the ABAP compiler generates byte-code interpreted by the ABAP Virtual Machine inside dialog work processes (DIA).\",\"callout\":{\"type\":\"info\",\"text\":\"Handbook Note: In S4D400 Unit 1, learners explore how ADT connects via RFC/REST to the SAP backend. No local compilation happens on your PC; ADT sends source code to the server, which compiles and activates it.\"}},{\"title\":\"ABAP Development Tools (ADT) vs Classic SE38/SE80\",\"content\":\"Modern ABAP development has transitioned from classic SAP GUI transactions (SE38, SE80) to ABAP Development Tools (ADT) on Eclipse. ADT provides advanced static code checks (ATC), refactoring tools, outline navigation, and seamless integration with Core Data Services (CDS) and the RESTful Application Programming Model (RAP).\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Hello World with if_oo_adt_classrun\",\"code\":\"CLASS zcl_demo_hello DEFINITION\\n  PUBLIC\\n  FINAL\\n  CREATE PUBLIC.\\n\\n  PUBLIC SECTION.\\n    INTERFACES if_oo_adt_classrun.\\nENDCLASS.\\n\\nCLASS zcl_demo_hello IMPLEMENTATION.\\n  METHOD if_oo_adt_classrun~main.\\n    out->write( 'Hello ABAP Mastery Learner!' ).\\n    out->write( |Executed by { sy-uname } on { sy-datum }| ).\\n  ENDMETHOD.\\nENDCLASS.\",\"expectedOutput\":\"Hello ABAP Mastery Learner!\\nExecuted by LEARNER on 20261017\"}},{\"title\":\"Common Mistakes & Fixes\",\"mistakes\":[{\"mistake\":\"Editing code and running it without activating first (Ctrl+F3).\",\"correction\":\"Always activate with Ctrl+F3. Inactive objects are only drafts visible to your user; background jobs and other callers execute the last active version.\"},{\"mistake\":\"Expecting local Git commits or offline builds in Eclipse without an active SAP connection.\",\"correction\":\"ADT requires a continuous connection to an active SAP Application Server backend system project.\"}]}],\"knowledgeCheck\":{\"question\":\"Which interface allows an ABAP class to be executed directly in ADT via F9 (Run as ABAP Application)?\",\"options\":[\"if_serializable_object\",\"if_oo_adt_classrun\",\"if_amdp_marker_hdb\",\"if_t100_message\"],\"correctAnswer\":\"if_oo_adt_classrun\",\"explanation\":\"Implementing if_oo_adt_classrun provides the main( ) method with the out parameter for console execution in ADT.\"}}"
   },
   {
-    id: 'les-fnd-02',
-    module_id: 'mod-fnd-2',
-    title: 'Data Objects, Elementary Types & String Templates',
-    order_index: 2,
-    estimated_mins: 35,
-    prerequisites: 'les-fnd-01',
-    objectives: 'Master elementary ABAP data types (I, STRING, P, D, T, C), classical DATA statements versus modern inline declarations DATA(lv_var), and string interpolation templates |...{ var }...|.',
-    is_core: 1,
-    handbook_unit: 'S4D400 Unit 2: Basic ABAP Language Elements',
-    summary: 'ABAP provides both fixed-length and variable-length elementary types. Modern ABAP allows inline declaration DATA(var) = expr and string templates |...{ expr }...| to write clean, expressive code.',
-    key_takeaways: '- Fixed-length types: I (Integer 4-byte), C (Character), N (Numeric text), D (Date YYYYMMDD), T (Time HHMMSS), P (Packed decimal).\n- Variable-length types: STRING (dynamic text) and XSTRING (byte sequence).\n- Modern inline declarations: DATA(lv_total) = lv_price * lv_qty avoids pre-declaring variables at the top of routines.\n- String templates |Hello { lv_name }| replace cumbersome CONCATENATE statements.',
-    content_json: JSON.stringify({
-      sections: [
-        {
-          title: 'Elementary Data Types in ABAP',
-          content: 'ABAP data types are split into predefined elementary types with fixed length (such as I for 4-byte integers, D for dates in YYYYMMDD format, T for times in HHMMSS, P for packed decimals with decimals specified, and C for text) and predefined types with variable length (STRING for text of dynamic size).',
-          codeSnippet: {
-            language: 'abap',
-            title: 'Predefined Types Declaration',
-            code: `DATA lv_count TYPE i VALUE 10.
-DATA lv_price TYPE p DECIMALS 2 VALUE '149.99'.
-DATA lv_date  TYPE d VALUE '20261017'.
-DATA lv_name  TYPE string VALUE 'ABAP Developer'.
-
-WRITE: / 'Count:', lv_count.
-WRITE: / 'Price:', lv_price.
-WRITE: / 'Date:', lv_date.`,
-            expectedOutput: `Count: 10\nPrice: 149.99\nDate: 20261017`
-          }
-        },
-        {
-          title: 'Modern Inline Declarations and String Templates',
-          content: 'Starting with ABAP 7.40, you no longer need to declare all variables at the beginning of a method. You can declare them inline at the exact position where they receive their first value using DATA(...). Furthermore, string templates enclosed in pipes (|...|) allow direct variable interpolation inside curly braces { } with formatting options.',
-          codeSnippet: {
-            language: 'abap',
-            title: 'Modern Inline Declarations and String Interpolation',
-            code: `DATA(lv_item)  = 'SAP S/4HANA'.
-DATA(lv_qty)   = 3.
-DATA(lv_unit)  = '450.00'.
-DATA(lv_total) = lv_qty * lv_unit.
-
-DATA(lv_msg) = |Purchased { lv_qty } licenses of { lv_item } for a total of { lv_total } USD|.
-WRITE: / lv_msg.`,
-            expectedOutput: 'Purchased 3 licenses of SAP S/4HANA for a total of 1350.00 USD'
-          }
-        },
-        {
-          title: 'Common Mistakes & Fixes',
-          mistakes: [
-            {
-              mistake: 'Using CONCATENATE str1 str2 INTO result SEPARATED BY space in modern ABAP.',
-              correction: 'Use string templates: DATA(result) = |{ str1 } { str2 }|. This is more readable and automatically handles conversions.'
-            },
-            {
-              mistake: 'Forgetting space inside string template expressions: |{lv_var}|.',
-              correction: 'ABAP requires at least one space after the opening curly brace and before the closing curly brace: |{ lv_var }|.'
-            }
-          ]
-        }
-      ],
-      knowledgeCheck: {
-        question: 'Which of the following syntax lines correctly uses an ABAP string template with a variable lv_user?',
-        options: [
-          'DATA(msg) = "Welcome " & lv_user.',
-          'DATA(msg) = |Welcome {lv_user}|.',
-          'DATA(msg) = |Welcome { lv_user }|.',
-          'DATA(msg) = `Welcome ${lv_user}`.'
-        ],
-        correctAnswer: 'DATA(msg) = |Welcome { lv_user }|.',
-        explanation: 'In ABAP string templates (|...|), embedded expressions must have spaces between the curly braces and the enclosed expression: { lv_user }.'
-      }
-    })
+    "id": "les-fnd-01b",
+    "module_id": "mod-fnd-1",
+    "title": "ABAP Packages, Software Components & Transport Requests",
+    "order_index": 2,
+    "estimated_mins": 30,
+    "prerequisites": "les-fnd-01",
+    "objectives": "Understand transport organizers, workbench vs customizing transport requests, package hierarchies, and the significance of $TMP local objects.",
+    "is_core": 0,
+    "handbook_unit": "S4D400 Unit 1: Organizing Development Objects",
+    "summary": "All ABAP development artifacts are cataloged in packages. Transportable packages record changes in Workbench Transport Requests for lifecycle promotion to Quality and Production systems.",
+    "key_takeaways": "1. Packages beginning with $ (such as $TMP) are local and non-transportable.\n2. Workbench requests move repository objects across system landscape tiers.\n3. Software components define the top-level delivery units in SAP.",
+    "content_json": "{\"sections\":[{\"title\":\"Software Components, Packages, and Namespaces\",\"content\":\"Every development object in SAP belongs to an ABAP Package (formerly Development Class). Packages define organizational ownership, transport behavior, and software component affiliation. Standard customer objects use the Z or Y customer namespace.\",\"callout\":{\"type\":\"tip\",\"text\":\"When experimenting in learning environments, assign objects to package $TMP so no transport request prompt is required.\"}},{\"title\":\"Transport Request Mechanics\",\"content\":\"A Transport Request consists of a header and one or more tasks assigned to developers. When a developer finishes an object and activates it, the changes are captured in their task. Once all tasks are released and the request itself is released, the SAP Transport Management System (TMS) exports the objects to the file system for import into target systems (QAS, PRD).\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Verifying Package Assignment at Runtime\",\"code\":\"DATA lv_package TYPE string VALUE '$TMP'.\\nIF lv_package CP '$*'.\\n  WRITE: / 'Object is LOCAL and non-transportable.'.\\nELSE.\\n  WRITE: / 'Object is TRANSPORTABLE.'.\\nENDIF.\",\"expectedOutput\":\"Object is LOCAL and non-transportable.\"}},{\"title\":\"Common Mistakes & Fixes\",\"mistakes\":[{\"mistake\":\"Accidentally placing a production-bound class into $TMP.\",\"correction\":\"Right-click the object in ADT, choose Change Package Assignment, and assign it to a transportable package (e.g. Z_CORE).\"}]}],\"knowledgeCheck\":{\"question\":\"Which package prefix ensures an object cannot be transported to another SAP system?\",\"options\":[\"Z_LOCAL\",\"Y_DEV\",\"$TMP\",\"LOCAL_PKG\"],\"correctAnswer\":\"$TMP\",\"explanation\":\"Any package starting with $ is treated by SAP as temporary and local, preventing export via transport requests.\"}}"
   },
   {
-    id: 'les-fnd-03',
-    module_id: 'mod-fnd-3',
-    title: 'Conditional Logic and Iteration Structures',
-    order_index: 3,
-    estimated_mins: 30,
-    prerequisites: 'les-fnd-02',
-    objectives: 'Implement branching with IF / ELSEIF / ELSE and CASE / WHEN, loop iterations with DO and WHILE, and understand the COND and SWITCH constructor expressions.',
-    is_core: 1,
-    handbook_unit: 'S4D400 Unit 2: Basic Techniques',
-    summary: 'ABAP provides both statement-based control flow (IF, CASE, DO, WHILE) and modern expression-based control flow (COND #( ... ), SWITCH #( ... )).',
-    key_takeaways: '- Statement-based: IF condition. ... ELSEIF ... ELSE. ... ENDIF.\n- Case evaluation: CASE variable. WHEN val1. ... WHEN OTHERS. ... ENDCASE.\n- Loops: DO n TIMES increments sy-index each iteration.\n- Modern expressions: COND #( WHEN ... THEN ... ELSE ... ) and SWITCH #( ... ) produce values directly inside assignments.',
-    content_json: JSON.stringify({
-      sections: [
-        {
-          title: 'Conditional Branching: IF vs CASE',
-          content: 'ABAP uses IF ... ENDIF for multi-condition boolean checks. When comparing a single variable against multiple exact values, CASE ... WHEN ... ENDCASE is cleaner and preferred for performance.',
-          codeSnippet: {
-            language: 'abap',
-            title: 'IF and CASE Logic',
-            code: `DATA lv_score TYPE i VALUE 88.
-DATA lv_grade TYPE c LENGTH 2.
-
-IF lv_score >= 90.
-  lv_grade = 'A'.
-ELSEIF lv_score >= 80.
-  lv_grade = 'B'.
-ELSEIF lv_score >= 70.
-  lv_grade = 'C'.
-ELSE.
-  lv_grade = 'F'.
-ENDIF.
-
-WRITE: / |Score: { lv_score }, Grade: { lv_grade }|.`,
-            expectedOutput: 'Score: 88, Grade: B'
-          }
-        },
-        {
-          title: 'Modern Constructor Expression: COND #',
-          content: 'Modern ABAP allows conditional logic to be written as an inline expression using COND. This eliminates boilerplate IF statements when assigning a variable.',
-          codeSnippet: {
-            language: 'abap',
-            title: 'Inline COND # Constructor',
-            code: `DATA lv_status_code TYPE c LENGTH 1 VALUE 'A'.
-
-DATA(lv_status_text) = COND string(
-  WHEN lv_status_code = 'A' THEN 'Active'
-  WHEN lv_status_code = 'P' THEN 'Pending'
-  WHEN lv_status_code = 'C' THEN 'Cancelled'
-  ELSE 'Unknown'
-).
-
-WRITE: / |Status: { lv_status_text }|.`,
-            expectedOutput: 'Status: Active'
-          }
-        }
-      ],
-      knowledgeCheck: {
-        question: 'Inside a DO ... ENDDO loop, which system field contains the current iteration counter (1, 2, 3...)?',
-        options: [
-          'sy-tabix',
-          'sy-index',
-          'sy-subrc',
-          'sy-loopc'
-        ],
-        correctAnswer: 'sy-index',
-        explanation: 'sy-index holds the current loop pass in DO and WHILE loops. sy-tabix holds the current table index in LOOP AT internal tables.'
-      }
-    })
+    "id": "les-fnd-02",
+    "module_id": "mod-fnd-2",
+    "title": "Data Objects, Elementary Types & String Templates",
+    "order_index": 1,
+    "estimated_mins": 40,
+    "prerequisites": "les-fnd-01",
+    "objectives": "Distinguish elementary types (I, P, D, T, C, STRING), use modern inline declarations DATA(...), and master string templates enclosed in pipes |...|.",
+    "is_core": 1,
+    "handbook_unit": "S4D400 Unit 2: Basic ABAP Language Elements",
+    "summary": "ABAP features fixed-length types (I, P, D, T, C) and dynamic types (STRING). Modern ABAP emphasizes inline declarations and string interpolation.",
+    "key_takeaways": "1. Use TYPE P DECIMALS n for monetary values to avoid rounding errors.\n2. Inline declarations DATA(...) declare variables right at their first assignment.\n3. String templates |...| enable clean variable interpolation with { } formatting.",
+    "content_json": "{\"sections\":[{\"title\":\"Elementary Data Types in ABAP\",\"content\":\"ABAP data types are split into predefined elementary types with fixed length (such as I for 4-byte integers, D for dates in YYYYMMDD format, T for times in HHMMSS, P for packed decimals with decimals specified, and C for text) and predefined types with variable length (STRING for text of dynamic size).\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Predefined Types Declaration\",\"code\":\"DATA lv_count TYPE i VALUE 10.\\nDATA lv_price TYPE p DECIMALS 2 VALUE '149.99'.\\nDATA lv_date  TYPE d VALUE '20261017'.\\nDATA lv_name  TYPE string VALUE 'ABAP Developer'.\\n\\nWRITE: / 'Count:', lv_count.\\nWRITE: / 'Price:', lv_price.\\nWRITE: / 'Date:', lv_date.\",\"expectedOutput\":\"Count: 10\\nPrice: 149.99\\nDate: 20261017\"}},{\"title\":\"Modern Inline Declarations and String Templates\",\"content\":\"Starting with ABAP 7.40, you no longer need to declare all variables at the beginning of a method. You can declare them inline at the exact position where they receive their first value using DATA(...). Furthermore, string templates enclosed in pipes (|...|) allow direct variable interpolation inside curly braces { } with formatting options.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Modern Inline Declarations and String Interpolation\",\"code\":\"DATA(lv_item)  = 'SAP S/4HANA'.\\nDATA(lv_qty)   = 3.\\nDATA(lv_unit)  = '450.00'.\\nDATA(lv_total) = lv_qty * lv_unit.\\n\\nDATA(lv_msg) = |Purchased { lv_qty } licenses of { lv_item } for a total of { lv_total } USD|.\\nWRITE: / lv_msg.\",\"expectedOutput\":\"Purchased 3 licenses of SAP S/4HANA for a total of 1350.00 USD\"}},{\"title\":\"Common Mistakes & Fixes\",\"mistakes\":[{\"mistake\":\"Using Type F (floating point) for currencies.\",\"correction\":\"Never use float for finance. Floats cannot represent decimal fractions like 0.1 exactly. Always use TYPE P DECIMALS 2.\"},{\"mistake\":\"Forgetting spaces around operators or inside string templates.\",\"correction\":\"ABAP tokenizers require whitespace around symbols: |{ lv_var }| not |{lv_var}|, and a + b not a+b.\"}]}],\"knowledgeCheck\":{\"question\":\"Which elementary data type is mandatory for currency and monetary calculations in ABAP?\",\"options\":[\"Type F (Float)\",\"Type P (Packed Decimal)\",\"Type I (Integer)\",\"Type C (Character)\"],\"correctAnswer\":\"Type P (Packed Decimal)\",\"explanation\":\"Type P uses binary coded decimals to avoid precision loss and rounding inaccuracies in monetary calculations.\"}}"
   },
   {
-    id: 'les-fnd-04',
-    module_id: 'mod-fnd-4',
-    title: 'Internal Tables: Standard, Sorted & Hashed Tables',
-    order_index: 4,
-    estimated_mins: 45,
-    prerequisites: 'les-fnd-03',
-    objectives: 'Differentiate the three internal table types (Standard, Sorted, Hashed), choose appropriate key definitions, and perform table operations (APPEND, INSERT, READ, MODIFY, DELETE, SORT).',
-    is_core: 1,
-    handbook_unit: 'S4D400 Unit 2: Internal Tables',
-    summary: 'Internal tables are dynamic in-memory arrays in ABAP. Choosing between Standard (linear index), Sorted (binary search index), and Hashed (O(1) hash algorithm) is critical for system performance.',
-    key_takeaways: '- Standard Table: Cost of linear search is O(N). Fast APPEND at end. Uses BINARY SEARCH only after explicit SORT.\n- Sorted Table: Automatically maintained in sorted key order. Binary search O(log N) on key reads.\n- Hashed Table: Constant time O(1) key access via hash algorithm. Must have UNIQUE key; no index access allowed.\n- Table expressions: lt_table[ id = 100 ] replaces READ TABLE statements.',
-    content_json: JSON.stringify({
-      sections: [
-        {
-          title: 'Table Categories Comparison',
-          content: 'Understanding table categories is one of the most heavily tested topics in SAP certifications and technical interviews. Standard tables allow duplicate keys and index access. Sorted tables maintain order continuously upon INSERT. Hashed tables calculate memory addresses using a hashing algorithm, enabling instantaneous access regardless of table size.',
-          codeSnippet: {
-            language: 'abap',
-            title: 'Modern VALUE Operator with Internal Tables',
-            code: `TYPES: BEGIN OF ty_employee,
-         id   TYPE i,
-         name TYPE string,
-         role TYPE string,
-       END OF ty_employee.
-
-TYPES tt_employees TYPE STANDARD TABLE OF ty_employee WITH EMPTY KEY.
-
-DATA(lt_team) = VALUE tt_employees(
-  ( id = 101 name = 'Alice' role = 'Architect' )
-  ( id = 102 name = 'Bob'   role = 'Developer' )
-  ( id = 103 name = 'Carol' role = 'QA Lead' )
-).
-
-LOOP AT lt_team INTO DATA(ls_member).
-  WRITE: / |[{ ls_member-id }] { ls_member-name } - { ls_member-role }|.
-ENDLOOP.`,
-            expectedOutput: `[101] Alice - Architect\n[102] Bob - Developer\n[103] Carol - QA Lead`
-          }
-        },
-        {
-          title: 'Reading Tables: Classic READ vs Table Expressions',
-          content: 'In classic ABAP, READ TABLE was used with sy-subrc checks. In ABAP 7.40+, table expressions provide concise bracket syntax lt_table[ ... ] with optional VALUE #( ... OPTIONAL ) to avoid CX_SY_ITAB_LINE_NOT_FOUND exceptions.',
-          codeSnippet: {
-            language: 'abap',
-            title: 'Table Expression with Key Search',
-            code: `DATA(lt_codes) = VALUE string_table(
-  ( 'INITIAL' )
-  ( 'IN_PROGRESS' )
-  ( 'COMPLETED' )
-).
-
-" Read index 2
-DATA(lv_second) = lt_codes[ 2 ].
-WRITE: / |Second state: { lv_second }|.`,
-            expectedOutput: 'Second state: IN_PROGRESS'
-          }
-        }
-      ],
-      knowledgeCheck: {
-        question: 'Which table category does NOT permit access by index (e.g. READ TABLE ... INDEX 1)?',
-        options: [
-          'Standard Table',
-          'Sorted Table',
-          'Hashed Table',
-          'Index Table'
-        ],
-        correctAnswer: 'Hashed Table',
-        explanation: 'Hashed tables do not have an index. Rows are stored according to a hash algorithm and can only be accessed using their UNIQUE key.'
-      }
-    })
+    "id": "les-fnd-02b",
+    "module_id": "mod-fnd-2",
+    "title": "Structures, Work Areas & Nested Complex Types",
+    "order_index": 2,
+    "estimated_mins": 35,
+    "prerequisites": "les-fnd-02",
+    "objectives": "Define local structure types with TYPES: BEGIN OF ... END OF, access structure components using hyphens (-), and compare flat vs deep structures.",
+    "is_core": 0,
+    "handbook_unit": "S4D400 Unit 2: Complex Data Objects",
+    "summary": "Structures bundle multiple related fields together. Component access uses the hyphen operator. Structures containing strings or internal tables are considered deep structures.",
+    "key_takeaways": "1. Access structure fields with ls_struct-fieldname.\n2. Flat structures contain only elementary fixed-length types.\n3. Deep structures contain dynamic strings or nested tables, which store references.",
+    "content_json": "{\"sections\":[{\"title\":\"Defining and Populating Structures\",\"content\":\"A structure is a composite data object consisting of named components. In ABAP, structures are created using TYPES BEGIN OF ... END OF or by referencing Data Dictionary structures.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Structure Definition and Component Access\",\"code\":\"TYPES: BEGIN OF ty_flight,\\n         carrier_id TYPE c LENGTH 3,\\n         conn_id    TYPE n LENGTH 4,\\n         city_from  TYPE string,\\n         city_to    TYPE string,\\n         price      TYPE p DECIMALS 2,\\n       END OF ty_flight.\\n\\nDATA ls_flight TYPE ty_flight.\\nls_flight-carrier_id = 'LH'.\\nls_flight-conn_id    = '0400'.\\nls_flight-city_from  = 'Frankfurt'.\\nls_flight-city_to    = 'New York'.\\nls_flight-price      = '550.00'.\\n\\nWRITE: / |Flight { ls_flight-carrier_id }-{ ls_flight-conn_id }: { ls_flight-city_from } to { ls_flight-city_to } ({ ls_flight-price } EUR)|.\",\"expectedOutput\":\"Flight LH -0400: Frankfurt to New York (550.00 EUR)\"}},{\"title\":\"Flat vs Deep Structures\",\"content\":\"A flat structure contains only fields with fixed length (e.g. C, N, D, T, I, P). When assigned or cleared, the entire memory block can be processed contiguously. A deep structure contains variable-length components like STRING or internal tables, meaning it holds pointers to heap memory.\",\"callout\":{\"type\":\"warning\",\"text\":\"You cannot use binary operations like TCP or legacy file transfers directly on deep structures without serialization.\"}}],\"knowledgeCheck\":{\"question\":\"Which operator is used in ABAP to access a component of a structure?\",\"options\":[\".\",\"->\",\"-\",\"::\"],\"correctAnswer\":\"-\",\"explanation\":\"ABAP syntax reserves the hyphen (-) for structure component access (ls_order-gross_amount).\"}}"
   },
   {
-    id: 'les-fnd-05',
-    module_id: 'mod-fnd-5',
-    title: 'System Fields, SY-SUBRC & Debugging Techniques',
-    order_index: 5,
-    estimated_mins: 30,
-    prerequisites: 'les-fnd-04',
-    objectives: 'Master essential ABAP system fields (SY-SUBRC, SY-TABIX, SY-INDEX, SY-UNAME, SY-DATUM, SY-UZEIT) and program tracing in ADT.',
-    is_core: 1,
-    handbook_unit: 'S4D400 Unit 2: System Fields and Debugging',
-    summary: 'The system structure SY contains runtime status values updated automatically by the ABAP kernel. Checking SY-SUBRC immediately after database, table, or authority operations is mandatory in robust code.',
-    key_takeaways: '- SY-SUBRC = 0 indicates successful execution.\n- SY-SUBRC = 4 typically indicates entry not found, end of file, or authorization failure.\n- Never perform other statements before checking SY-SUBRC, as subsequent statements may overwrite it.\n- ADT provides line breakpoints, conditional breakpoints, and watchpoints for dynamic debugging.',
-    content_json: JSON.stringify({
-      sections: [
-        {
-          title: 'Crucial System Fields Overview',
-          content: 'The ABAP runtime environment maintains the global structure SY (or SYST). Key fields include:\n- SY-SUBRC: Return code of statements (0 = success, 4 = not found/failed, 8 = general error).\n- SY-TABIX: Current line index in internal tables.\n- SY-INDEX: Current iteration count in DO or WHILE loops.\n- SY-UNAME: Logged-in user ID.\n- SY-DATUM: Current server date (YYYYMMDD).\n- SY-UZEIT: Current server time (HHMMSS).',
-          codeSnippet: {
-            language: 'abap',
-            title: 'SY-SUBRC Evaluation Pattern',
-            code: `DATA lt_numbers TYPE TABLE OF i.
-APPEND 10 TO lt_numbers.
-APPEND 20 TO lt_numbers.
-
-READ TABLE lt_numbers INDEX 5 INTO DATA(lv_val).
-IF sy-subrc = 0.
-  WRITE: / |Found value: { lv_val }|.
-ELSE.
-  WRITE: / |Entry at index 5 does not exist. SY-SUBRC: { sy-subrc }|.
-ENDIF.`,
-            expectedOutput: 'Entry at index 5 does not exist. SY-SUBRC: 4'
-          }
-        }
-      ],
-      knowledgeCheck: {
-        question: 'What is the value of SY-SUBRC when a READ TABLE operation fails to find a matching entry?',
-        options: [
-          '0',
-          '4',
-          '8',
-          '-1'
-        ],
-        correctAnswer: '4',
-        explanation: 'SY-SUBRC is set to 4 when a table lookup fails to find an entry satisfying the specified key or index.'
-      }
-    })
+    "id": "les-fnd-03",
+    "module_id": "mod-fnd-3",
+    "title": "Conditional Logic and Iteration Structures",
+    "order_index": 1,
+    "estimated_mins": 40,
+    "prerequisites": "les-fnd-02",
+    "objectives": "Master conditional branching (IF, ELSEIF, ELSE, CASE), loops (DO, WHILE), loop controls (CONTINUE, CHECK, EXIT), and system fields sy-index.",
+    "is_core": 1,
+    "handbook_unit": "S4D400 Unit 2: Control Structures",
+    "summary": "Control structures guide program flow. sy-index tracks DO/WHILE iteration counts, and EXIT/CONTINUE control execution jumps.",
+    "key_takeaways": "1. Every IF must conclude with ENDIF, and every DO/WHILE with ENDDO/ENDWHILE.\n2. sy-index holds the current 1-based loop counter.\n3. Clean ABAP prefers guard clauses and early exits over deep nested IF conditions.",
+    "content_json": "{\"sections\":[{\"title\":\"Branching: IF-ELSE vs CASE\",\"content\":\"ABAP supports standard conditional branching using IF-ELSEIF-ELSE-ENDIF and CASE-WHEN-OTHERS-ENDCASE. When evaluating a single variable against multiple discrete constant values, CASE is significantly clearer and preferred by Clean ABAP guidelines.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"CASE and IF Statements\",\"code\":\"DATA(lv_code) = 'EUR'.\\nDATA lv_name TYPE string.\\n\\nCASE lv_code.\\n  WHEN 'USD'. lv_name = 'US Dollar'.\\n  WHEN 'EUR'. lv_name = 'Euro'.\\n  WHEN 'GBP'. lv_name = 'British Pound'.\\n  WHEN OTHERS. lv_name = 'Unknown Currency'.\\nENDCASE.\\n\\nWRITE: / |Currency { lv_code } is { lv_name }|.\",\"expectedOutput\":\"Currency EUR is Euro\"}},{\"title\":\"Iteration: DO and WHILE Loops\",\"content\":\"DO loops execute a specified number of times (DO n TIMES). If no count is specified, it loops indefinitely until an EXIT is reached. WHILE loops iterate as long as a Boolean condition remains true. During each iteration, the system field sy-index holds the 1-based loop counter.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"DO Loop with sy-index Accumulator\",\"code\":\"DATA lv_sum TYPE i VALUE 0.\\nDO 5 TIMES.\\n  lv_sum = lv_sum + sy-index.\\nENDDO.\\nWRITE: / |Sum of 1 to 5 is { lv_sum }|.\",\"expectedOutput\":\"Sum of 1 to 5 is 15\"}}],\"knowledgeCheck\":{\"question\":\"Which system field tracks the current iteration index in a DO or WHILE loop?\",\"options\":[\"sy-tabix\",\"sy-subrc\",\"sy-index\",\"sy-dbcnt\"],\"correctAnswer\":\"sy-index\",\"explanation\":\"sy-index holds the current iteration number in DO and WHILE loops. sy-tabix is reserved for internal table loops.\"}}"
   },
-
-  // Path 2: OOP Lessons
   {
-    id: 'les-oop-01',
-    module_id: 'mod-oop-1',
-    title: 'Object-Oriented ABAP: Classes, Objects & Visibility',
-    order_index: 1,
-    estimated_mins: 40,
-    prerequisites: 'les-fnd-05',
-    objectives: 'Understand classes as templates for objects, define PUBLIC, PROTECTED, and PRIVATE sections, implement instance attributes/methods, and use constructors.',
-    is_core: 1,
-    handbook_unit: 'S4D400 Unit 3: Local Classes',
-    summary: 'ABAP Objects encapsulates data (attributes) and operations (methods) in classes. Clear separation of visibility sections guarantees information hiding and architectural integrity.',
-    key_takeaways: '- PUBLIC SECTION: Accessible by any external caller.\n- PROTECTED SECTION: Accessible only within the class and its subclasses.\n- PRIVATE SECTION: Accessible strictly within the defining class.\n- Constructor METHODS constructor is invoked automatically upon NEW or CREATE OBJECT.',
-    content_json: JSON.stringify({
-      sections: [
-        {
-          title: 'Class Definition and Implementation Structure',
-          content: 'An ABAP class is composed of two distinct parts: the DEFINITION section (specifying visibility, attributes, method signatures, events) and the IMPLEMENTATION section (containing the actual procedural code for each method).',
-          codeSnippet: {
-            language: 'abap',
-            title: 'Complete Local Class with Constructor',
-            code: `CLASS lcl_account DEFINITION.
-  PUBLIC SECTION.
-    METHODS constructor
-      IMPORTING iv_owner   TYPE string
-                iv_initial TYPE p.
-    METHODS deposit
-      IMPORTING iv_amount TYPE p.
-    METHODS get_balance
-      RETURNING VALUE(rv_balance) TYPE p.
-    METHODS get_owner
-      RETURNING VALUE(rv_owner) TYPE string.
-
-  PRIVATE SECTION.
-    DATA mv_owner   TYPE string.
-    DATA mv_balance TYPE p DECIMALS 2.
-ENDCLASS.
-
-CLASS lcl_account IMPLEMENTATION.
-  METHOD constructor.
-    mv_owner   = iv_owner.
-    mv_balance = iv_initial.
-  ENDMETHOD.
-
-  METHOD deposit.
-    mv_balance = mv_balance + iv_amount.
-  ENDMETHOD.
-
-  METHOD get_balance.
-    rv_balance = mv_balance.
-  ENDMETHOD.
-
-  METHOD get_owner.
-    rv_owner = mv_owner.
-  ENDMETHOD.
-ENDCLASS.
-
-DATA(lo_acc) = NEW lcl_account( iv_owner = 'Generic Enterprise' iv_initial = '1000.00' ).
-lo_acc->deposit( '250.00' ).
-WRITE: / |Account: { lo_acc->get_owner() } Balance: { lo_acc->get_balance() }|.`,
-            expectedOutput: 'Account: Generic Enterprise Balance: 1250.00'
-          }
-        }
-      ],
-      knowledgeCheck: {
-        question: 'Which operator is used to instantiate an object inline in modern ABAP (ABAP 7.40+)?',
-        options: [
-          'CREATE OBJECT lo_obj.',
-          'NEW lcl_class( ... )',
-          'INSTANTIATE lcl_class.',
-          'ALLOCATE lcl_class.'
-        ],
-        correctAnswer: 'NEW lcl_class( ... )',
-        explanation: 'The NEW constructor operator instantiates objects inline, e.g. DATA(lo_inst) = NEW lcl_my_class( param = val ).'
-      }
-    })
+    "id": "les-fnd-04",
+    "module_id": "mod-fnd-4",
+    "title": "Internal Tables: Standard, Sorted & Hashed Tables",
+    "order_index": 1,
+    "estimated_mins": 45,
+    "prerequisites": "les-fnd-03",
+    "objectives": "Distinguish the three internal table types, analyze their performance characteristics, use APPEND and LOOP AT, and evaluate sy-tabix.",
+    "is_core": 1,
+    "handbook_unit": "S4D400 Unit 2: Internal Tables",
+    "summary": "Internal tables are dynamic arrays. Standard tables offer fast append but linear search O(N); Sorted tables provide O(log N) binary search; Hashed tables offer O(1) constant time lookups.",
+    "key_takeaways": "1. Standard tables: append fast, linear search O(N).\n2. Sorted tables: automatically maintained in sorted order, binary search O(log N).\n3. Hashed tables: unique primary key, constant time O(1) lookup.",
+    "content_json": "{\"sections\":[{\"title\":\"The Three Internal Table Categories\",\"content\":\"Internal tables allow ABAP programs to hold, manipulate, and process tabular data in memory. SAP provides three distinct categories optimized for different use cases: Standard Tables, Sorted Tables, and Hashed Tables.\",\"callout\":{\"type\":\"info\",\"text\":\"Choosing the right table type is the #1 performance factor in ABAP. Using a Standard table where a Hashed table is needed causes severe quadratic O(N^2) bottlenecks.\"}},{\"title\":\"Table Iteration and Row Append\",\"content\":\"You populate internal tables using APPEND (for standard tables) or INSERT (for sorted/hashed tables). Iterating rows is performed with LOOP AT ... INTO or LOOP AT ... ASSIGNING FIELD-SYMBOL.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Internal Table Population and Loop\",\"code\":\"TYPES: BEGIN OF ty_user,\\n         id   TYPE i,\\n         role TYPE string,\\n       END OF ty_user.\\n\\nDATA lt_users TYPE STANDARD TABLE OF ty_user.\\nDATA ls_user TYPE ty_user.\\n\\nls_user-id = 1. ls_user-role = 'Admin'.\\nAPPEND ls_user TO lt_users.\\n\\nls_user-id = 2. ls_user-role = 'Developer'.\\nAPPEND ls_user TO lt_users.\\n\\nLOOP AT lt_users INTO ls_user.\\n  WRITE: / |User { ls_user-id } has role { ls_user-role } (Tabix: { sy-tabix })|.\\nENDLOOP.\",\"expectedOutput\":\"User 1 has role Admin (Tabix: 1)\\nUser 2 has role Developer (Tabix: 2)\"}}],\"knowledgeCheck\":{\"question\":\"Which internal table category provides constant-time O(1) key lookups?\",\"options\":[\"Standard Table\",\"Sorted Table\",\"Hashed Table\",\"Index Table\"],\"correctAnswer\":\"Hashed Table\",\"explanation\":\"Hashed tables use an internal hash algorithm to achieve O(1) single-record read performance regardless of table size.\"}}"
   },
-
-  // Path 3: Modern Data Access Lesson
   {
-    id: 'les-data-01',
-    module_id: 'mod-data-1',
-    title: 'Modern Open SQL & The @ Escape Character',
-    order_index: 1,
-    estimated_mins: 35,
-    prerequisites: 'les-oop-01',
-    objectives: 'Write modern ABAP SQL with comma-separated field lists, escaping host variables with @, inline table population INTO TABLE @DATA(lt_result), and joins.',
-    is_core: 1,
-    handbook_unit: 'S4D400 Unit 4: Data Access with Open SQL',
-    summary: 'Modern ABAP SQL aligns with SQL-92 standards: field lists are separated by commas, host variables are prefixed with @, and results can be selected directly into inline internal tables.',
-    key_takeaways: '- Comma-separated fields: SELECT carrid, connid, price FROM sflight.\n- Host variables MUST be escaped with @: WHERE carrid = @lv_carrier.\n- Inline target: INTO TABLE @DATA(lt_flights) avoids declaring structures in advance.\n- Strict SQL syntax checking enforces modern semantics.',
-    content_json: JSON.stringify({
-      sections: [
-        {
-          title: 'Classic SQL vs Modern ABAP SQL',
-          content: 'In classic ABAP, SELECT fields were separated by spaces without commas, and host variables lacked prefixes. In modern ABAP SQL (introduced in 7.40 SP05 and enriched in 7.50+), commas are mandatory between columns, host variables MUST be escaped with @ to prevent column-variable ambiguities, and target tables can be declared inline.',
-          codeSnippet: {
-            language: 'abap',
-            title: 'Modern ABAP SQL Query',
-            code: `* Modern ABAP SQL Syntax
-DATA lv_airline TYPE c LENGTH 3 VALUE 'LH'.
-
-* Querying database table with host variable @ and inline target
-SELECT carrid,
-       connid,
-       countryfr,
-       cityfrom,
-       cityto
-  FROM spfli
-  WHERE carrid = @lv_airline
-  ORDER BY connid
-  INTO TABLE @DATA(lt_routes).
-
-IF sy-subrc = 0.
-  WRITE: / |Retrieved { lines( lt_routes ) } flight connections for airline { lv_airline }.|.
-ENDIF.`,
-            expectedOutput: 'Retrieved flight connections for airline LH.'
-          }
-        }
-      ],
-      knowledgeCheck: {
-        question: 'Why must ABAP host variables be prefixed with @ in modern Open SQL statements?',
-        options: [
-          'To indicate pointer dereferencing.',
-          'To distinguish ABAP program variables from database column names in strict syntax.',
-          'To force asynchronous database execution.',
-          'Because @ is the memory address symbol in ABAP.'
-        ],
-        correctAnswer: 'To distinguish ABAP program variables from database column names in strict syntax.',
-        explanation: 'The @ prefix escapes ABAP host variables so the SQL parser unambiguously differentiates ABAP variables from database fields.'
-      }
-    })
+    "id": "les-fnd-04b",
+    "module_id": "mod-fnd-4",
+    "title": "Internal Table Operations, Keys & Table Expressions",
+    "order_index": 2,
+    "estimated_mins": 40,
+    "prerequisites": "les-fnd-04",
+    "objectives": "Use READ TABLE, binary search, table expressions lt_tab[ key = val ], line_exists, and secondary keys.",
+    "is_core": 0,
+    "handbook_unit": "S4D400 Unit 2: Advanced Table Operations",
+    "summary": "Table expressions replace legacy READ TABLE with concise bracket syntax. Secondary keys allow multiple sorted or hashed indexes on a single internal table.",
+    "key_takeaways": "1. Use lt_tab[ key = val ] with OPTIONAL to prevent CX_SY_ITAB_LINE_NOT_FOUND.\n2. line_exists( lt_tab[ key = val ] ) provides clean Boolean presence checks.\n3. Secondary keys allow secondary fast lookups without duplicating table memory.",
+    "content_json": "{\"sections\":[{\"title\":\"Modern Table Expressions vs Legacy READ TABLE\",\"content\":\"In ABAP 7.40+, table expressions provide bracket notation: lt_tab[ id = 100 ]. However, if the row is missing, a table expression throws the exception CX_SY_ITAB_LINE_NOT_FOUND. Wrap expressions in VALUE #( ... OPTIONAL ) to avoid exceptions.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Table Expressions and line_exists\",\"code\":\"TYPES: BEGIN OF ty_item,\\n         code TYPE string,\\n         name TYPE string,\\n       END OF ty_item.\\n\\nDATA lt_items TYPE HASHED TABLE OF ty_item WITH UNIQUE KEY code.\\nDATA ls_item TYPE ty_item.\\n\\nls_item-code = 'MAT-01'. ls_item-name = 'Pencil'. INSERT ls_item INTO TABLE lt_items.\\nls_item-code = 'MAT-02'. ls_item-name = 'Notebook'. INSERT ls_item INTO TABLE lt_items.\\n\\nIF line_exists( lt_items[ code = 'MAT-02' ] ).\\n  DATA(ls_found) = lt_items[ code = 'MAT-02' ].\\n  WRITE: / |Found: { ls_found-name }|.\\nENDIF.\",\"expectedOutput\":\"Found: Notebook\"}}],\"knowledgeCheck\":{\"question\":\"Which exception is raised when a table expression fails to locate a row?\",\"options\":[\"CX_SY_MOVE_CAST_ERROR\",\"CX_SY_ITAB_LINE_NOT_FOUND\",\"CX_SY_ZERODIVIDE\",\"CX_SY_REF_IS_INITIAL\"],\"correctAnswer\":\"CX_SY_ITAB_LINE_NOT_FOUND\",\"explanation\":\"Table expressions raise CX_SY_ITAB_LINE_NOT_FOUND when the specified index or key does not match any entry.\"}}"
   },
-
-  // Path 4: RAP Lesson
   {
-    id: 'les-rap-01',
-    module_id: 'mod-rap-1',
-    title: 'RAP Architecture, Business Objects & EML',
-    order_index: 1,
-    estimated_mins: 45,
-    prerequisites: 'les-data-01',
-    objectives: 'Understand the ABAP RESTful Application Programming Model (RAP) layers, Behavior Definitions (BDEF), and Entity Manipulation Language (EML).',
-    is_core: 1,
-    handbook_unit: 'S4D400 Unit 8: ABAP RESTful Application Programming Model',
-    summary: 'RAP is the standard architecture for building cloud-ready and S/4HANA enterprise applications. It combines CDS view entities for data modeling, Behavior Definitions for transactional capabilities, and EML for programmatically consuming business objects.',
-    key_takeaways: '- RAP replaces legacy BOPF and classic BAPIs with a clean CDS-centric architecture.\n- Managed Scenario: RAP framework handles create, update, delete automatically.\n- Unmanaged Scenario: Developer implements legacy update function modules or BAPIs.\n- EML (Entity Manipulation Language): MODIFY ENTITIES OF and READ ENTITIES OF provide type-safe transactional operations.',
-    content_json: JSON.stringify({
-      sections: [
-        {
-          title: 'RAP The 3-Tier Layered Architecture',
-          content: 'The RAP stack consists of:\n1. Data Modeling & Behavior: CDS View Entities define the relational model; Behavior Definition (.bdef) declares operations (create, update, delete, actions, validations).\n2. Business Services: Service Definition exposes CDS projections; Service Binding binds them to protocols (OData V4 Web API, OData V2 UI).\n3. Consumption: SAP Fiori Elements UI or external API consumers.',
-          codeSnippet: {
-            language: 'abap',
-            title: 'Behavior Definition (BDEF) Excerpt',
-            code: `managed implementation in class zbp_i_travel unique;
-strict ( 2 );
-
-define behavior for ZI_Travel alias Travel
-persistent table ztravel_table
-lock master
-authorization master ( instance )
-{
-  create;
-  update;
-  delete;
-
-  field ( readonly ) TravelId, CreatedAt;
-  field ( mandatory ) CustomerId, BeginDate, EndDate;
-
-  action ( features : instance ) acceptTravel result [1] $self;
-  validation validateDates on save { create; update; }
-}`,
-            expectedOutput: 'BDEF Syntax verified'
-          }
-        },
-        {
-          title: 'Entity Manipulation Language (EML)',
-          content: 'EML is an extension of ABAP syntax that enables developers to invoke RAP business objects directly from ABAP code without HTTP requests. It is used in unit tests, batch jobs, and integration routines.',
-          codeSnippet: {
-            language: 'abap',
-            title: 'EML MODIFY ENTITIES Example',
-            code: `* Programmatic Creation using EML
-MODIFY ENTITIES OF ZI_Travel
-  ENTITY Travel
-    CREATE FIELDS ( AgencyId CustomerId BookingFee CurrencyCode )
-      WITH VALUE #( ( %cid        = 'MY_CID_01'
-                      AgencyId    = '070001'
-                      CustomerId  = '000012'
-                      BookingFee  = '25.00'
-                      CurrencyCode = 'USD' ) )
-  MAPPED   DATA(lt_mapped)
-  FAILED   DATA(lt_failed)
-  REPORTED DATA(lt_reported).
-
-COMMIT ENTITIES.`,
-            expectedOutput: 'EML Statement Executed'
-          }
-        }
-      ],
-      knowledgeCheck: {
-        question: 'Which language extension in ABAP allows direct, type-safe transactional consumption of RAP Business Objects?',
-        options: [
-          'BAPI Call Interface',
-          'Entity Manipulation Language (EML)',
-          'Core Data Services (CDS)',
-          'SAP Gateway Client'
-        ],
-        correctAnswer: 'Entity Manipulation Language (EML)',
-        explanation: 'EML (MODIFY ENTITIES, READ ENTITIES) is the native ABAP language extension for interacting with RAP Business Objects.'
-      }
-    })
+    "id": "les-fnd-05",
+    "module_id": "mod-fnd-5",
+    "title": "System Fields, SY-SUBRC & Debugging Techniques",
+    "order_index": 1,
+    "estimated_mins": 40,
+    "prerequisites": "les-fnd-04",
+    "objectives": "Master key system fields (SY-SUBRC, SY-TABIX, SY-DBCNT, SY-UNAME, SY-DATUM), set breakpoints in ADT, step through code, and inspect call stacks.",
+    "is_core": 1,
+    "handbook_unit": "S4D400 Unit 2: Debugging and System Variables",
+    "summary": "System fields provide runtime metadata. SY-SUBRC = 0 confirms success, while non-zero values signal missing rows, authorization rejections, or errors.",
+    "key_takeaways": "1. SY-SUBRC = 0 means success; 4 means not found or check failed.\n2. SY-DBCNT holds the row count affected by the last database query.\n3. The ADT ABAP Debugger supports F5 (Step into), F6 (Step over), and F8 (Continue).",
+    "content_json": "{\"sections\":[{\"title\":\"Critical System Fields in Daily Development\",\"content\":\"The ABAP runtime maintains a global structure SY (or SYST) containing system status fields. Checking these fields immediately after statements like SELECT, READ TABLE, or AUTHORITY-CHECK is fundamental.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Verifying System Fields\",\"code\":\"DATA(lv_date) = sy-datum.\\nDATA(lv_user) = sy-uname.\\nWRITE: / |User { lv_user } active on system date { lv_date }|.\\nWRITE: / |Current sy-subrc is { sy-subrc }|.\",\"expectedOutput\":\"User LEARNER active on system date 20261017\\nCurrent sy-subrc is 0\"}},{\"title\":\"The ADT ABAP Debugger Workflow\",\"content\":\"In ADT on Eclipse, double-clicking the line number margin sets an ABAP Breakpoint. When execution hits the breakpoint, Eclipse prompts to switch to the ABAP Debug perspective, allowing inspection of variables, internal tables, call stacks, and system fields in real time.\",\"callout\":{\"type\":\"tip\",\"text\":\"Key shortcuts in ADT Debugger: F5 = Step Into (enter method), F6 = Step Over (execute line), F7 = Step Out (exit method), F8 = Resume.\"}}],\"knowledgeCheck\":{\"question\":\"What does SY-SUBRC = 4 signify after executing a READ TABLE statement?\",\"options\":[\"The table was deleted\",\"The record was not found\",\"A memory dump occurred\",\"Syntax error in query\"],\"correctAnswer\":\"The record was not found\",\"explanation\":\"SY-SUBRC = 4 indicates the key or index sought in the internal table does not exist.\"}}"
+  },
+  {
+    "id": "les-oop-01",
+    "module_id": "mod-oop-1",
+    "title": "Object-Oriented ABAP: Classes, Objects & Visibility",
+    "order_index": 1,
+    "estimated_mins": 45,
+    "prerequisites": "les-fnd-05",
+    "objectives": "Construct local ABAP classes, understand encapsulation with PUBLIC, PROTECTED, and PRIVATE sections, and instantiate objects with NEW.",
+    "is_core": 1,
+    "handbook_unit": "S4D400 Unit 3: Introduction to Object-Oriented Programming",
+    "summary": "OO ABAP transitions development from procedural form routines to encapsulated classes. Visibility sections protect internal state while exposing clean public APIs.",
+    "key_takeaways": "1. CLASS DEFINITION declares components; CLASS IMPLEMENTATION codes method bodies.\n2. PRIVATE members are accessible only to the class; PROTECTED includes subclasses.\n3. Instantiation uses DATA(lo_obj) = NEW lcl_class( ) or legacy CREATE OBJECT.",
+    "content_json": "{\"sections\":[{\"title\":\"Class Structure and Encapsulation\",\"content\":\"An ABAP class is divided into two distinct blocks: the DEFINITION section (declaring attributes, methods, types, and visibility) and the IMPLEMENTATION section (providing the executable code for all declared methods).\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Local Class Definition and Usage\",\"code\":\"CLASS lcl_vehicle DEFINITION.\\n  PUBLIC SECTION.\\n    METHODS: set_speed IMPORTING iv_speed TYPE i,\\n             get_speed RETURNING VALUE(rv_speed) TYPE i.\\n  PRIVATE SECTION.\\n    DATA mv_speed TYPE i.\\nENDCLASS.\\n\\nCLASS lcl_vehicle IMPLEMENTATION.\\n  METHOD set_speed.\\n    mv_speed = iv_speed.\\n  ENDMETHOD.\\n  METHOD get_speed.\\n    rv_speed = mv_speed.\\n  ENDMETHOD.\\nENDCLASS.\\n\\nSTART-OF-SELECTION.\\n  DATA lo_car TYPE REF TO lcl_vehicle.\\n  CREATE OBJECT lo_car.\\n  lo_car->set_speed( 120 ).\\n  WRITE: / |Current speed: { lo_car->get_speed( ) } km/h|.\",\"expectedOutput\":\"Current speed: 120 km/h\"}}],\"knowledgeCheck\":{\"question\":\"Which visibility section allows attributes to be accessed by subclasses but hides them from outside consumers?\",\"options\":[\"PUBLIC\",\"PROTECTED\",\"PRIVATE\",\"PACKAGE\"],\"correctAnswer\":\"PROTECTED\",\"explanation\":\"PROTECTED components are visible within the declaring class and all its subclasses, but hidden from external consumers.\"}}"
+  },
+  {
+    "id": "les-oop-01b",
+    "module_id": "mod-oop-1",
+    "title": "Constructors, Instance vs Static Methods & Attributes",
+    "order_index": 2,
+    "estimated_mins": 35,
+    "prerequisites": "les-oop-01",
+    "objectives": "Master instance CONSTRUCTOR and static CLASS_CONSTRUCTOR, contrast instance components (->) with static components (=>).",
+    "is_core": 0,
+    "handbook_unit": "S4D400 Unit 3: Constructors and Static Members",
+    "summary": "The instance CONSTRUCTOR runs upon object creation. The static CLASS_CONSTRUCTOR runs once per session. Static components belong to the class; instance components belong to an object.",
+    "key_takeaways": "1. Access instance members via object->method(); access static members via class=>method().\n2. Instance constructors can accept IMPORTING parameters; static constructors accept no parameters.\n3. CLASS_CONSTRUCTOR executes once before any class access occurs.",
+    "content_json": "{\"sections\":[{\"title\":\"Instance vs Static Components\",\"content\":\"Instance attributes (DATA) and methods (METHODS) exist per object instance. Static attributes (CLASS-DATA) and methods (CLASS-METHODS) exist once per class in memory, shared across all instances.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Static Counter and Instance Constructor\",\"code\":\"CLASS lcl_counter DEFINITION.\\n  PUBLIC SECTION.\\n    CLASS-DATA gv_total_instances TYPE i.\\n    CLASS-METHODS get_total RETURNING VALUE(rv_total) TYPE i.\\n    METHODS constructor.\\nENDCLASS.\\n\\nCLASS lcl_counter IMPLEMENTATION.\\n  METHOD constructor.\\n    gv_total_instances = gv_total_instances + 1.\\n  ENDMETHOD.\\n  METHOD get_total.\\n    rv_total = gv_total_instances.\\n  ENDMETHOD.\\nENDCLASS.\\n\\nSTART-OF-SELECTION.\\n  DATA lo_a TYPE REF TO lcl_counter.\\n  DATA lo_b TYPE REF TO lcl_counter.\\n  CREATE OBJECT lo_a.\\n  CREATE OBJECT lo_b.\\n  WRITE: / |Total instances created: { lcl_counter=>get_total( ) }|.\",\"expectedOutput\":\"Total instances created: 2\"}}],\"knowledgeCheck\":{\"question\":\"Which constructor can accept IMPORTING parameters?\",\"options\":[\"Static constructor (CLASS_CONSTRUCTOR)\",\"Instance constructor (CONSTRUCTOR)\",\"Both constructors\",\"Neither constructor\"],\"correctAnswer\":\"Instance constructor (CONSTRUCTOR)\",\"explanation\":\"Only instance constructors can receive importing parameters because static constructors are triggered implicitly by the runtime.\"}}"
+  },
+  {
+    "id": "les-oop-02",
+    "module_id": "mod-oop-2",
+    "title": "Inheritance, Polymorphism & Casting (Narrowing/Widening)",
+    "order_index": 1,
+    "estimated_mins": 45,
+    "prerequisites": "les-oop-01b",
+    "objectives": "Build class hierarchies using INHERITING FROM, override methods with REDEFINITION, call super->method, and apply upcasts (=) and downcasts (?=).",
+    "is_core": 1,
+    "handbook_unit": "S4D400 Unit 3: Inheritance and Polymorphism",
+    "summary": "Inheritance enables code reuse and polymorphism. Upcasting (=) is safe and implicit. Downcasting (?=) checks instance compatibility at runtime, raising CX_SY_MOVE_CAST_ERROR if invalid.",
+    "key_takeaways": "1. Subclasses inherit public and protected components via INHERITING FROM.\n2. Overridden methods must be declared with REDEFINITION in the subclass definition.\n3. Use ?= for downcasts to safely verify concrete instances at runtime.",
+    "content_json": "{\"sections\":[{\"title\":\"Inheritance and Method Redefinition\",\"content\":\"Inheritance allows a subclass to extend a superclass. When re-implementing a superclass method, declare the method in the subclass with the REDEFINITION addition. Inside the implementation, invoke the superclass behavior via super->method_name( ).\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Inheritance and Polymorphic Dispatch\",\"code\":\"CLASS lcl_animal DEFINITION.\\n  PUBLIC SECTION.\\n    METHODS speak RETURNING VALUE(rv_sound) TYPE string.\\nENDCLASS.\\n\\nCLASS lcl_animal IMPLEMENTATION.\\n  METHOD speak.\\n    rv_sound = '...'.\\n  ENDMETHOD.\\nENDCLASS.\\n\\nCLASS lcl_dog DEFINITION INHERITING FROM lcl_animal.\\n  PUBLIC SECTION.\\n    METHODS speak REDEFINITION.\\nENDCLASS.\\n\\nCLASS lcl_dog IMPLEMENTATION.\\n  METHOD speak.\\n    rv_sound = 'Woof!'.\\n  ENDMETHOD.\\nENDCLASS.\\n\\nSTART-OF-SELECTION.\\n  DATA lo_pet TYPE REF TO lcl_animal.\\n  CREATE OBJECT lo_pet TYPE lcl_dog.\\n  WRITE: / |Animal speaks: { lo_pet->speak( ) }|.\",\"expectedOutput\":\"Animal speaks: Woof!\"}}],\"knowledgeCheck\":{\"question\":\"Which operator performs a runtime-checked downcast (widening cast) from a superclass reference to a subclass reference?\",\"options\":[\"=\",\"->\",\"?=\",\"::\"],\"correctAnswer\":\"?=\",\"explanation\":\"?= performs a dynamic downcast and throws CX_SY_MOVE_CAST_ERROR if the instance does not conform to the target subclass.\"}}"
+  },
+  {
+    "id": "les-oop-02b",
+    "module_id": "mod-oop-2",
+    "title": "ABAP Interfaces & Decoupled Architecture",
+    "order_index": 2,
+    "estimated_mins": 40,
+    "prerequisites": "les-oop-02",
+    "objectives": "Declare interfaces with INTERFACE ... ENDINTERFACE, implement them in classes with INTERFACES intf, and understand dependency inversion.",
+    "is_core": 0,
+    "handbook_unit": "S4D400 Unit 3: Interfaces and Dependency Inversion",
+    "summary": "Interfaces specify public contracts without implementation. Classes can implement multiple interfaces, accessed via the tilde (~) operator.",
+    "key_takeaways": "1. Interfaces enable multiple inheritance of contracts in ABAP.\n2. Interface components are accessed using the compound name interface~method.\n3. Dependency injection relies on interfaces to decouple business logic from persistence.",
+    "content_json": "{\"sections\":[{\"title\":\"Defining and Implementing Interfaces\",\"content\":\"An interface defines a public contract of methods and attributes. Unlike abstract classes, a class can implement any number of interfaces using INTERFACES <intf_name>.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Interface Implementation and Tilde Access\",\"code\":\"INTERFACE lif_notifiable.\\n  METHODS notify IMPORTING iv_msg TYPE string.\\nENDINTERFACE.\\n\\nCLASS lcl_sms_service DEFINITION.\\n  PUBLIC SECTION.\\n    INTERFACES lif_notifiable.\\nENDCLASS.\\n\\nCLASS lcl_sms_service IMPLEMENTATION.\\n  METHOD lif_notifiable~notify.\\n    WRITE: / |SMS Alert: { iv_msg }|.\\n  ENDMETHOD.\\nENDCLASS.\\n\\nSTART-OF-SELECTION.\\n  DATA lo_notifier TYPE REF TO lif_notifiable.\\n  CREATE OBJECT lo_notifier TYPE lcl_sms_service.\\n  lo_notifier->notify( 'Booking confirmed' ).\",\"expectedOutput\":\"SMS Alert: Booking confirmed\"}}],\"knowledgeCheck\":{\"question\":\"How are interface methods referenced on an implementing class instance?\",\"options\":[\"lo_obj->interface.method( )\",\"lo_obj->interface~method( )\",\"lo_obj::interface->method( )\",\"lo_obj->method@interface( )\"],\"correctAnswer\":\"lo_obj->interface~method( )\",\"explanation\":\"The tilde (~) connects the interface name to its method name within the implementing class namespace.\"}}"
+  },
+  {
+    "id": "les-oop-03",
+    "module_id": "mod-oop-3",
+    "title": "Class-Based Exceptions & Error Propagation (CX_ROOT)",
+    "order_index": 1,
+    "estimated_mins": 40,
+    "prerequisites": "les-oop-02b",
+    "objectives": "Understand the exception hierarchy (CX_STATIC_CHECK, CX_DYNAMIC_CHECK, CX_NO_CHECK), use RAISE EXCEPTION TYPE, and handle errors with TRY ... CATCH.",
+    "is_core": 1,
+    "handbook_unit": "S4D400 Unit 3: Exception Handling",
+    "summary": "Class-based exceptions derived from CX_ROOT modernize error handling, replacing legacy sy-subrc return codes and functional exceptions with structured propagation.",
+    "key_takeaways": "1. CX_STATIC_CHECK exceptions must be caught or declared in RAISING signatures.\n2. CX_DYNAMIC_CHECK exceptions are verified at runtime (e.g. CX_SY_ZERODIVIDE).\n3. Use TRY ... CATCH ... CLEANUP ... ENDTRY to handle exceptions gracefully.",
+    "content_json": "{\"sections\":[{\"title\":\"The Exception Class Hierarchy\",\"content\":\"All class-based exceptions inherit from the abstract root class CX_ROOT. The hierarchy splits into three branches:\\n1. CX_STATIC_CHECK: Checked statically at compile-time. You MUST catch them or declare them in the method RAISING clause.\\n2. CX_DYNAMIC_CHECK: Not checked at compile-time. If uncaught, leads to a runtime error.\\n3. CX_NO_CHECK: System-critical exceptions (resource exhaustion) that can occur anywhere without declaration.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Custom Exception and TRY/CATCH\",\"code\":\"CLASS lcx_invalid_amount DEFINITION INHERITING FROM cx_static_check.\\nENDCLASS.\\n\\nCLASS lcl_payment DEFINITION.\\n  PUBLIC SECTION.\\n    METHODS pay IMPORTING iv_amount TYPE i RAISING lcx_invalid_amount.\\nENDCLASS.\\n\\nCLASS lcl_payment IMPLEMENTATION.\\n  METHOD pay.\\n    IF iv_amount <= 0.\\n      RAISE EXCEPTION TYPE lcx_invalid_amount.\\n    ENDIF.\\n    WRITE: / |Paid amount: { iv_amount }|.\\n  ENDMETHOD.\\nENDCLASS.\\n\\nSTART-OF-SELECTION.\\n  DATA lo_pay TYPE REF TO lcl_payment.\\n  CREATE OBJECT lo_pay.\\n  TRY.\\n    lo_pay->pay( -50 ).\\n  CATCH lcx_invalid_amount.\\n    WRITE: / 'Error: Invalid payment amount intercepted.'.\\n  ENDTRY.\",\"expectedOutput\":\"Error: Invalid payment amount intercepted.\"}}],\"knowledgeCheck\":{\"question\":\"Which base exception class enforces that callers must either CATCH the exception or declare it in RAISING?\",\"options\":[\"cx_no_check\",\"cx_dynamic_check\",\"cx_static_check\",\"cx_root_fatal\"],\"correctAnswer\":\"cx_static_check\",\"explanation\":\"cx_static_check is statically validated by the ABAP syntax checker, ensuring no unhandled exceptions compile without acknowledgment.\"}}"
+  },
+  {
+    "id": "les-oop-03b",
+    "module_id": "mod-oop-3",
+    "title": "Clean ABAP Principles: Readable, Maintainable Code",
+    "order_index": 2,
+    "estimated_mins": 35,
+    "prerequisites": "les-oop-03",
+    "objectives": "Apply SAP official Clean ABAP guidelines: small methods, intention-revealing names, avoiding dead code, and keeping cyclomatic complexity low.",
+    "is_core": 0,
+    "handbook_unit": "S4D400 Unit 3: Clean ABAP Guidelines",
+    "summary": "Clean ABAP is an open-source style guide developed by SAP engineering teams. It emphasizes readability, automated unit testing, small methods, and clear intent over clever micro-optimizations.",
+    "key_takeaways": "1. Keep methods small (3 to 20 lines) focused on a single responsibility.\n2. Prefer functional methods with RETURNING values over multiple EXPORTING parameters.\n3. Delete commented-out code; rely on version control (Git / TMS) instead.",
+    "content_json": "{\"sections\":[{\"title\":\"Core Clean ABAP Principles\",\"content\":\"Writing code for human readability is the primary objective of Clean ABAP. Code is read ten times more often than it is written. Key tenets include:\\n- Method naming should start with a clear verb (e.g. calculate_total_tax, not tax_calc).\\n- Return objects or structures instead of declaring 5+ EXPORTING parameters.\\n- Fail fast: use guard clauses at the top of a method instead of deep nested IF structures.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Clean Guard Clause vs Deep Nesting\",\"code\":\"\\\" Clean Guard Clause Pattern:\\nDATA lv_active TYPE abap_bool VALUE abap_false.\\nIF lv_active = abap_false.\\n  WRITE: / 'Guard triggered: User is inactive. Exiting.'.\\nENDIF.\",\"expectedOutput\":\"Guard triggered: User is inactive. Exiting.\"}}],\"knowledgeCheck\":{\"question\":\"According to Clean ABAP guidelines, what should you do with commented-out legacy code?\",\"options\":[\"Keep it with the developer name and date\",\"Move it to a special comment block at the end\",\"Delete it completely and rely on version control\",\"Wrap it in an IF 1 = 2 block\"],\"correctAnswer\":\"Delete it completely and rely on version control\",\"explanation\":\"Clean ABAP specifies that dead or commented-out code creates clutter and confusion; Git/TMS history preserves all past revisions.\"}}"
+  },
+  {
+    "id": "les-data-01",
+    "module_id": "mod-data-1",
+    "title": "Modern Open SQL & The @ Escape Character",
+    "order_index": 1,
+    "estimated_mins": 40,
+    "prerequisites": "les-oop-01",
+    "objectives": "Write modern ABAP SQL with comma-separated field lists, host variables escaped with @, inline target declarations, and strict syntax enforcement.",
+    "is_core": 1,
+    "handbook_unit": "S4D400 Unit 4: Open SQL Enhancements",
+    "summary": "Modern ABAP SQL aligns with standard SQL-92/99. Comma-separated field lists and host variables prefixed with @ ensure clarity and activate strict compiler checks.",
+    "key_takeaways": "1. Prefix ABAP host variables in SQL statements with @.\n2. Separate field lists with commas (SELECT carrier_id, connection_id).\n3. Use @DATA(lt_target) to declare receiving internal tables inline.",
+    "content_json": "{\"sections\":[{\"title\":\"Modern ABAP SQL vs Legacy Open SQL\",\"content\":\"Modern ABAP SQL (introduced in 7.40 and refined in 7.50+) modernized database queries to resemble standard ANSI SQL. In this new syntax, selected fields are comma-separated, host variables must be escaped with the @ character, and the INTO clause is placed at the end.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Modern Open SQL Query with Host Variable Escaping\",\"code\":\"DATA lv_status TYPE string VALUE 'O'.\\n\\nTYPES: BEGIN OF ty_order,\\n         order_id TYPE string,\\n         status   TYPE string,\\n         amount   TYPE i,\\n       END OF ty_order.\\n\\nDATA lt_orders TYPE STANDARD TABLE OF ty_order.\\nDATA ls_order TYPE ty_order.\\n\\nls_order-order_id = 'SO-1'. ls_order-status = 'O'. ls_order-amount = 100. APPEND ls_order TO lt_orders.\\nls_order-order_id = 'SO-2'. ls_order-status = 'C'. ls_order-amount = 200. APPEND ls_order TO lt_orders.\\n\\nLOOP AT lt_orders INTO ls_order WHERE status = 'O'.\\n  WRITE: / |Open Order: { ls_order-order_id } Amount: { ls_order-amount }|.\\nENDLOOP.\",\"expectedOutput\":\"Open Order: SO-1 Amount: 100\"}}],\"knowledgeCheck\":{\"question\":\"Why must ABAP host variables be prefixed with @ in modern Open SQL statements?\",\"options\":[\"It instructs the database to use an index\",\"It distinguishes ABAP program variables from database column names\",\"It is a mandatory email symbol\",\"It performs an asynchronous fetch\"],\"correctAnswer\":\"It distinguishes ABAP program variables from database column names\",\"explanation\":\"The @ prefix tells the SQL parser that the token is an ABAP host variable residing in application server memory rather than a database table column.\"}}"
+  },
+  {
+    "id": "les-data-01b",
+    "module_id": "mod-data-1",
+    "title": "Advanced Open SQL: Joins, Aggregations & Group By Queries",
+    "order_index": 2,
+    "estimated_mins": 40,
+    "prerequisites": "les-data-01",
+    "objectives": "Perform INNER and LEFT OUTER joins, use aggregate functions (SUM, AVG, COUNT, MAX), apply GROUP BY and HAVING filters directly in database queries.",
+    "is_core": 0,
+    "handbook_unit": "S4D400 Unit 4: SQL Joins and Aggregation",
+    "summary": "Pushing down joins and aggregations into the database layer leverages SAP HANA in-memory performance, minimizing network roundtrips.",
+    "key_takeaways": "1. Inner Joins return matching rows; Left Outer Joins preserve left-table rows with nulls for missing right entries.\n2. GROUP BY collapses matching rows when using aggregates like SUM or COUNT.\n3. Pushing aggregation to the database prevents pulling millions of rows into application memory.",
+    "content_json": "{\"sections\":[{\"title\":\"Database Pushdown with Joins and Aggregations\",\"content\":\"In SAP HANA development, business logic calculations that process large volumes of records should be executed directly on the database engine. Aggregating data in SQL reduces application server RAM usage by 90% or more.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Aggregation and Table Loop Simulator\",\"code\":\"DATA lv_sum TYPE i VALUE 0.\\nDATA lv_count TYPE i VALUE 3.\\nDATA lv_avg TYPE i.\\n\\nlv_sum = 1200 + 800 + 2500.\\nlv_avg = lv_sum / lv_count.\\n\\nWRITE: / |Total Revenue: { lv_sum }|.\\nWRITE: / |Average Order Value: { lv_avg }|.\",\"expectedOutput\":\"Total Revenue: 4500\\nAverage Order Value: 1500\"}}],\"knowledgeCheck\":{\"question\":\"Which clause must accompany aggregate expressions (SUM, COUNT) when querying non-aggregated columns?\",\"options\":[\"ORDER BY\",\"GROUP BY\",\"DISTINCT\",\"FOR ALL ENTRIES\"],\"correctAnswer\":\"GROUP BY\",\"explanation\":\"Standard SQL requires that any non-aggregate columns appearing in the SELECT list be explicitly listed in the GROUP BY clause.\"}}"
+  },
+  {
+    "id": "les-data-02",
+    "module_id": "mod-data-2",
+    "title": "Constructor Operators: VALUE, CORRESPONDING, COND, SWITCH",
+    "order_index": 1,
+    "estimated_mins": 45,
+    "prerequisites": "les-data-01",
+    "objectives": "Master functional constructor operators: VALUE #( ... ) for construction, CORRESPONDING #( ... ) for mapping, and COND / SWITCH for inline conditions.",
+    "is_core": 1,
+    "handbook_unit": "S4D400 Unit 5: Modern Constructor Expressions",
+    "summary": "Constructor operators replace multiple procedural statements with concise, functional expressions that infer target types dynamically.",
+    "key_takeaways": "1. VALUE #( ... ) instantiates structures and internal tables with values inline.\n2. CORRESPONDING #( ... ) maps matching field names between differing structures.\n3. COND #( ... ) and SWITCH #( ... ) assign conditional values without procedural IF blocks.",
+    "content_json": "{\"sections\":[{\"title\":\"The Modern ABAP Expression Family\",\"content\":\"ABAP 7.40 introduced constructor expressions that revolutionize code readability. The hash (#) symbol instructs the compiler to infer the type from the receiving target variable.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"COND Expression and VALUE Operator\",\"code\":\"DATA(lv_score) = 85.\\nDATA(lv_grade) = COND string(\\n  WHEN lv_score >= 90 THEN 'A'\\n  WHEN lv_score >= 80 THEN 'B'\\n  ELSE 'C' ).\\n\\nWRITE: / |Score { lv_score } yields Grade { lv_grade }|.\",\"expectedOutput\":\"Score 85 yields Grade B\"}}],\"knowledgeCheck\":{\"question\":\"What does the hash (#) symbol signify in an expression like VALUE #( ... )?\",\"options\":[\"It denotes a private class attribute\",\"It instructs the compiler to infer the data type from the context target\",\"It enforces binary hashing\",\"It is a comment indicator\"],\"correctAnswer\":\"It instructs the compiler to infer the data type from the context target\",\"explanation\":\"VALUE #( ... ) uses the target variable type as the constructor type operand, removing redundant type name declarations.\"}}"
+  },
+  {
+    "id": "les-data-02b",
+    "module_id": "mod-data-2",
+    "title": "Table Iteration Expressions, FILTER & REDUCE Operators",
+    "order_index": 2,
+    "estimated_mins": 40,
+    "prerequisites": "les-data-02",
+    "objectives": "Construct tables using FOR expressions, filter tables with the FILTER operator, and collapse tables into scalar summaries with REDUCE.",
+    "is_core": 0,
+    "handbook_unit": "S4D400 Unit 5: Advanced Functional Expressions",
+    "summary": "Functional table expressions allow mapping, filtering, and reduction without explicit procedural LOOP AT loops or temporary variables.",
+    "key_takeaways": "1. FOR ... IN ... iterates within VALUE #( ) constructor expressions.\n2. FILTER extracts subsets from sorted/hashed tables by key.\n3. REDUCE calculates aggregate summaries like sums or concatenated strings.",
+    "content_json": "{\"sections\":[{\"title\":\"REDUCE and FOR Table Iteration\",\"content\":\"The REDUCE operator acts as a functional fold operation, accumulating values across an internal table. Paired with FOR expressions, it eliminates boilerplates of declaring loop counters and work areas.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Accumulation Simulation\",\"code\":\"DATA lv_sum TYPE i VALUE 0.\\nDO 4 TIMES.\\n  lv_sum = lv_sum + ( sy-index * 10 ).\\nENDDO.\\nWRITE: / |Total calculated: { lv_sum }|.\",\"expectedOutput\":\"Total calculated: 100\"}}],\"knowledgeCheck\":{\"question\":\"Which operator is used in modern ABAP to reduce an internal table to a single accumulated scalar value?\",\"options\":[\"COLLAPSE\",\"REDUCE\",\"SUMMARIZE\",\"COMPRESS\"],\"correctAnswer\":\"REDUCE\",\"explanation\":\"REDUCE iterates over table rows, executing an accumulator expression to compute a single scalar or structure output.\"}}"
+  },
+  {
+    "id": "les-data-03",
+    "module_id": "mod-data-3",
+    "title": "Core Data Services (CDS) View Entities & Annotations",
+    "order_index": 1,
+    "estimated_mins": 45,
+    "prerequisites": "les-data-02",
+    "objectives": "Define CDS View Entities in ADT, understand CDS annotations (@EndUserText, @Semantics, @AccessControl), model on-demand associations, and compare with classic views.",
+    "is_core": 1,
+    "handbook_unit": "S4D400 Unit 6: Core Data Services Basics",
+    "summary": "CDS View Entities are the cornerstone of the SAP S/4HANA data model. They compile without DDIC SQL views, providing rich semantic metadata and on-demand associations.",
+    "key_takeaways": "1. CDS View Entities (define view entity) replace classic DDIC-based views.\n2. Annotations provide UI styling, semantic currencies, and security directives.\n3. Associations define semantic links that only join database tables on demand.",
+    "content_json": "{\"sections\":[{\"title\":\"Core Data Services (CDS) View Entities\",\"content\":\"ABAP Core Data Services extends SQL to allow declarative data modeling on the database layer. In S/4HANA, CDS View Entities define semantically rich data models that serve as the foundation for analytical queries, transactional RAP applications, and Fiori Elements UIs.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Sample CDS View Entity Definition\",\"code\":\"@AccessControl.authorizationCheck: #NOT_REQUIRED\\n@EndUserText.label: 'Flight Connection Entity'\\ndefine view entity ZI_Connection as select from /dmo/connection {\\n  key carrier_id      as CarrierId,\\n  key connection_id   as ConnectionId,\\n      airport_from_id as AirportFromId,\\n      airport_to_id   as AirportToId,\\n      distance        as Distance,\\n      distance_unit   as DistanceUnit\\n}\",\"expectedOutput\":\"Simulated CDS entity defined successfully.\"}}],\"knowledgeCheck\":{\"question\":\"Which CDS view type does not generate an SQL View artifact in the ABAP Dictionary (SE11)?\",\"options\":[\"Classic CDS View (define view)\",\"CDS View Entity (define view entity)\",\"Database View\",\"Projection View\"],\"correctAnswer\":\"CDS View Entity (define view entity)\",\"explanation\":\"CDS View Entities compile directly to the database without generating an extra DDIC SQL View artifact.\"}}"
+  },
+  {
+    "id": "les-rap-01",
+    "module_id": "mod-rap-1",
+    "title": "RAP Architecture, Business Objects & CDS Data Model",
+    "order_index": 1,
+    "estimated_mins": 45,
+    "prerequisites": "les-data-03",
+    "objectives": "Understand the three layers of the RESTful Application Programming Model (RAP): Data Modeling, Behavior Definition, and Business Service Exposure.",
+    "is_core": 1,
+    "handbook_unit": "RAP Overview: Architecture and BO Concepts",
+    "summary": "RAP is SAP's premier development framework for S/4HANA and BTP. It structures development into CDS data models, behavior definitions, and OData service bindings.",
+    "key_takeaways": "1. Root entities control transactional boundaries and lifecycle locking.\n2. Managed RAP automates standard database CRUD saves.\n3. Unmanaged RAP provides complete custom control over existing legacy APIs.",
+    "content_json": "{\"sections\":[{\"title\":\"The RESTful Application Programming Model (RAP) Layers\",\"content\":\"SAP RAP structures enterprise applications into three cohesive layers:\\n1. Data Modeling: CDS View Entities define the relational model, semantic annotations, and entity composition trees (Root Travel -> Child Booking).\\n2. Behavior Definition & Implementation: BDEF declares capabilities (create, update, delete, actions, validations). Behavior pools execute business logic.\\n3. Business Services: Service Definitions expose entities, and Service Bindings generate OData V4 or V2 protocol endpoints.\",\"callout\":{\"type\":\"info\",\"text\":\"RAP is cloud-ready and runs identically on SAP BTP ABAP Environment and on-premise SAP S/4HANA 1909+.\"}}],\"knowledgeCheck\":{\"question\":\"In a RAP composition hierarchy (e.g. Travel and Booking), which entity serves as the transactional lock master?\",\"options\":[\"Child Entity (Booking)\",\"Root Entity (Travel)\",\"Service Binding\",\"Database Table\"],\"correctAnswer\":\"Root Entity (Travel)\",\"explanation\":\"The Root Entity establishes transactional boundaries and manages lock synchronization across all composed child entities.\"}}"
+  },
+  {
+    "id": "les-rap-02",
+    "module_id": "mod-rap-2",
+    "title": "RAP Behavior Definitions (BDEF) & Transactional Lifecycle",
+    "order_index": 1,
+    "estimated_mins": 45,
+    "prerequisites": "les-rap-01",
+    "objectives": "Define Behavior Definitions with strict(2), differentiate managed vs unmanaged save scenarios, configure draft handling, and establish lock master rules.",
+    "is_core": 1,
+    "handbook_unit": "RAP Unit 2: Behavior Definitions and Transactional Runtime",
+    "summary": "The Behavior Definition declares transactional capabilities for CDS entities. Managed scenarios delegate standard CRUD persistence to the RAP runtime.",
+    "key_takeaways": "1. Managed BDEF generates standard database INSERT/UPDATE/DELETE routines automatically.\n2. with draft allows users to store incomplete changes in draft staging tables.\n3. strict(2) enforces the latest ABAP cloud quality rules.",
+    "content_json": "{\"sections\":[{\"title\":\"Behavior Definition Syntax and Capabilities\",\"content\":\"The Behavior Definition (BDEF) defines the transactional behavior of a CDS entity. It specifies whether operations are managed or unmanaged, defines lock masters, authorization checks, and enumerates custom business actions.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Sample Managed BDEF Definition\",\"code\":\"managed implementation in class zbp_i_travel unique;\\nstrict ( 2 );\\nwith draft;\\n\\ndefine behavior for ZI_Travel_M alias Travel\\npersistent table ztravel_table\\ndraft table ztravel_d\\nlock master\\nauthorization master ( global )\\n{\\n  create;\\n  update;\\n  delete;\\n  action acceptTravel result [1] $self;\\n}\",\"expectedOutput\":\"Behavior definition syntax validated.\"}}],\"knowledgeCheck\":{\"question\":\"Which BDEF option enables automatic creation of staging tables for saving incomplete user edits before activation?\",\"options\":[\"with draft\",\"managed save\",\"strict ( 2 )\",\"lock master\"],\"correctAnswer\":\"with draft\",\"explanation\":\"with draft activates the RAP draft engine, allowing users to save work-in-progress records without violating final validations.\"}}"
+  },
+  {
+    "id": "les-rap-02b",
+    "module_id": "mod-rap-2",
+    "title": "Entity Manipulation Language (EML): READ, MODIFY & COMMIT",
+    "order_index": 2,
+    "estimated_mins": 40,
+    "prerequisites": "les-rap-02",
+    "objectives": "Execute transactional operations on RAP entities using EML statements: READ ENTITIES, MODIFY ENTITIES, and COMMIT ENTITIES.",
+    "is_core": 0,
+    "handbook_unit": "RAP Unit 3: Entity Manipulation Language",
+    "summary": "EML is an ABAP language extension for executing transactional operations on RAP Business Objects, decoupling callers from internal database persistence.",
+    "key_takeaways": "1. MODIFY ENTITIES updates entity transactional buffers.\n2. READ ENTITIES fetches entity state directly from the transactional buffer or database.\n3. COMMIT ENTITIES triggers the final save sequence to write changes permanently.",
+    "content_json": "{\"sections\":[{\"title\":\"EML Syntax Mechanics\",\"content\":\"EML statements operate directly on RAP business objects. When calling EML, you receive FAILED and REPORTED response structures that contain entity keys and user-facing message instances.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Simulated EML Status Modification\",\"code\":\"DATA lv_booking_id TYPE string VALUE 'BKG-01'.\\nDATA lv_status TYPE string VALUE 'N'.\\n\\n\\\" Simulate action acceptBooking:\\nlv_status = 'A'.\\n\\nWRITE: / |Booking { lv_booking_id } status updated to: { lv_status } (Accepted)|.\",\"expectedOutput\":\"Booking BKG-01 status updated to: A (Accepted)\"}}],\"knowledgeCheck\":{\"question\":\"Which clause in an EML statement captures detailed diagnostic message instances for end-user feedback?\",\"options\":[\"FAILED\",\"REPORTED\",\"DIAGNOSTICS\",\"MESSAGES\"],\"correctAnswer\":\"REPORTED\",\"explanation\":\"The REPORTED structure collects message objects (derived from /IWBEP/IF_CP_MESSAGE or IF_T100_MESSAGE) returned during EML execution.\"}}"
+  },
+  {
+    "id": "les-rap-03",
+    "module_id": "mod-rap-3",
+    "title": "RAP Validations, Determinations, Actions & Services",
+    "order_index": 1,
+    "estimated_mins": 45,
+    "prerequisites": "les-rap-02b",
+    "objectives": "Implement business rules in Behavior Pools: Validations for data integrity checks, Determinations for automatic calculation, and Custom Actions for state changes.",
+    "is_core": 1,
+    "handbook_unit": "RAP Unit 4: Business Logic Implementation",
+    "summary": "Behavior pool classes implement BDEF business logic. Validations veto invalid saves, determinations compute values, and actions implement workflow state transitions.",
+    "key_takeaways": "1. Validations inspect entity fields and populate FAILED/REPORTED to block saving invalid data.\n2. Determinations trigger on modify or save to calculate derived fields automatically.\n3. Actions implement custom business operations like approving or cancelling records.",
+    "content_json": "{\"sections\":[{\"title\":\"Behavior Pool Methods and Execution Phases\",\"content\":\"Behavior logic is implemented in special local classes (FOR BEHAVIOR OF) inside behavior pool classes (zbp_*). These methods participate in the RAP transactional lifecycle:\\n- Interaction Phase: Determinations on modify compute default values.\\n- Early Save Phase: Validations inspect finalized fields and veto saves if rules fail.\\n- Late Save Phase: Determinations on save assign final continuous document numbers.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Simulated Validation Logic\",\"code\":\"DATA lv_begin TYPE d VALUE '20261101'.\\nDATA lv_end   TYPE d VALUE '20261015'.\\n\\nIF lv_end < lv_begin.\\n  WRITE: / 'Validation Error: End date cannot precede Begin date.'.\\nELSE.\\n  WRITE: / 'Dates are valid.'.\\nENDIF.\",\"expectedOutput\":\"Validation Error: End date cannot precede Begin date.\"}}],\"knowledgeCheck\":{\"question\":\"What happens when a RAP validation adds an entity key to the FAILED structure during the save phase?\",\"options\":[\"The save sequence is aborted, preventing persistence to the database\",\"The database table is dropped\",\"The error is ignored and the save completes anyway\",\"The system reboots\"],\"correctAnswer\":\"The save sequence is aborted, preventing persistence to the database\",\"explanation\":\"Populating FAILED signals to the RAP transactional engine that business rules were violated, halting the save sequence and displaying errors to the user.\"}}"
+  },
+  {
+    "id": "les-rap-03b",
+    "module_id": "mod-rap-3",
+    "title": "Service Definitions, Service Bindings & OData V4",
+    "order_index": 2,
+    "estimated_mins": 35,
+    "prerequisites": "les-rap-03",
+    "objectives": "Expose CDS data models via Service Definitions, configure Service Bindings for OData V4 UI and Web API, and test endpoints in ADT preview.",
+    "is_core": 0,
+    "handbook_unit": "RAP Unit 5: Service Exposure",
+    "summary": "Service Definitions define which CDS entities are exposed. Service Bindings choose the communication protocol (OData V4 UI / Web API) and generate endpoints.",
+    "key_takeaways": "1. Service Definitions selectively expose entities from the data model.\n2. Service Bindings bind definitions to OData protocols (V4 UI, V4 Web API, V2).\n3. ADT provides a built-in Fiori Elements preview for testing UI services instantly.",
+    "content_json": "{\"sections\":[{\"title\":\"Exposing RAP Business Services\",\"content\":\"Exposing a RAP application requires two development artifacts:\\n1. Service Definition: Declares the CDS entities to publish (e.g. expose ZI_Travel_M as Travel).\\n2. Service Binding: Implements the protocol. In modern S/4HANA, OData V4 - UI is the standard for Fiori Elements apps, offering batch optimization and reduced payload sizes.\",\"callout\":{\"type\":\"tip\",\"text\":\"You can test any OData V4 UI service binding directly inside ADT by right-clicking the entity in the Service Binding editor and choosing Preview.\"}}],\"knowledgeCheck\":{\"question\":\"Which binding type is standard for modern SAP Fiori Elements applications in RAP?\",\"options\":[\"OData V4 - UI\",\"SOAP Web Service\",\"RFC Gateway\",\"Direct SQL\"],\"correctAnswer\":\"OData V4 - UI\",\"explanation\":\"OData V4 - UI is optimized for Fiori Elements, providing performance benefits, delta loading, and rich draft handling.\"}}"
+  },
+  {
+    "id": "les-adv-01",
+    "module_id": "mod-adv-1",
+    "title": "ABAP Unit Testing: TDD, Test Doubles & Assertions",
+    "order_index": 1,
+    "estimated_mins": 45,
+    "prerequisites": "les-oop-03b",
+    "objectives": "Implement unit test classes with FOR TESTING, use cl_abap_unit_assert methods, isolate dependencies using ABAP SQL Test Double frameworks, and practice Test-Driven Development.",
+    "is_core": 1,
+    "handbook_unit": "S4D400 Unit 7: Quality Assurance and ABAP Unit",
+    "summary": "ABAP Unit enables automated regression testing. Test double frameworks mock database calls, allowing fast, repeatable tests without persistent side effects.",
+    "key_takeaways": "1. Test classes are declared with FOR TESTING DURATION SHORT RISK LEVEL HARMLESS.\n2. cl_abap_unit_assert=>assert_equals validates expected vs actual outputs.\n3. Test classes are excluded from production binaries, costing zero runtime overhead.",
+    "content_json": "{\"sections\":[{\"title\":\"Writing Automated ABAP Unit Tests\",\"content\":\"ABAP Unit is built into the language. Test classes are defined inside the Test Classes include of a global class. The compiler strips test code from production execution, ensuring zero performance overhead in live systems.\",\"codeSnippet\":{\"language\":\"abap\",\"title\":\"Sample Unit Test Class Structure\",\"code\":\"CLASS ltcl_calc_test DEFINITION FOR TESTING\\n  DURATION SHORT\\n  RISK LEVEL HARMLESS.\\n\\n  PRIVATE SECTION.\\n    METHODS test_addition FOR TESTING.\\nENDCLASS.\\n\\nCLASS ltcl_calc_test IMPLEMENTATION.\\n  METHOD test_addition.\\n    DATA(lv_act) = 2 + 3.\\n    IF lv_act = 5.\\n      WRITE: / 'Test passed: Assert equals verified.'.\\n    ENDIF.\\n  ENDMETHOD.\\nENDCLASS.\\n\\nSTART-OF-SELECTION.\\n  DATA lo_test TYPE REF TO ltcl_calc_test.\\n  CREATE OBJECT lo_test.\\n  lo_test->test_addition( ).\",\"expectedOutput\":\"Test passed: Assert equals verified.\"}}],\"knowledgeCheck\":{\"question\":\"Which method of cl_abap_unit_assert is used to verify that an actual result matches an expected value?\",\"options\":[\"assert_equals\",\"verify_same\",\"check_match\",\"assert_identical\"],\"correctAnswer\":\"assert_equals\",\"explanation\":\"cl_abap_unit_assert=>assert_equals compares the expected value (exp) against actual value (act) and fails the test if they differ.\"}}"
+  },
+  {
+    "id": "les-adv-02",
+    "module_id": "mod-adv-2",
+    "title": "ABAP Performance Tuning: SQL Trace (ST05), SAT & HANA Pushdown",
+    "order_index": 1,
+    "estimated_mins": 45,
+    "prerequisites": "les-adv-01",
+    "objectives": "Analyze performance using ST05 (SQL Trace) and SAT (Runtime Analysis), detect identical database statements, prevent nested queries, and apply HANA code pushdown.",
+    "is_core": 1,
+    "handbook_unit": "S4D400 Unit 7: Performance Analysis and Optimization",
+    "summary": "Optimizing ABAP on HANA requires minimizing database roundtrips, fetching only required fields, and avoiding SELECT queries inside loops.",
+    "key_takeaways": "1. Never execute SELECT queries inside a LOOP AT (the nested SELECT anti-pattern).\n2. ST05 traces SQL durations, execution plans, and identical database roundtrips.\n3. Push filtering and aggregation into the database layer via CDS views and modern SQL.",
+    "content_json": "{\"sections\":[{\"title\":\"The Golden Rules of ABAP on HANA Performance\",\"content\":\"Performance tuning on SAP HANA shifts from CPU-bound optimization to data-transfer minimization:\\n1. Keep the result set small: Specify explicit field lists; never use SELECT * in production.\\n2. Minimize database roundtrips: Eliminate queries inside loops. Join tables or use subqueries.\\n3. Column store compression: HANA compresses columnar data; accessing fewer columns dramatically reduces memory bandwidth bottlenecks.\",\"callout\":{\"type\":\"warning\",\"text\":\"Executing a SELECT statement inside a LOOP of 100,000 items creates 100,000 network roundtrips between application server and database, grinding the system to a halt.\"}}],\"knowledgeCheck\":{\"question\":\"Which transaction code is the standard SAP tool for analyzing SQL database execution traces and durations?\",\"options\":[\"ST05\",\"SE38\",\"SM50\",\"AL08\"],\"correctAnswer\":\"ST05\",\"explanation\":\"ST05 (Performance Analysis) captures detailed SQL traces showing execution duration, records fetched, and database explain plans.\"}}"
   }
 ];
 
 export const SEED_CHALLENGES = [
   {
-    id: 'chal-01',
-    title: 'Student Marks & Grade Evaluator',
-    category: 'Conditions & Calculations',
-    difficulty: 'easy',
-    order_index: 1,
-    problem_statement: 'Given three student marks (lv_mark1, lv_mark2, lv_mark3), calculate the total and average score. If the average is 80 or above, output grade "Distinction". If 60 to 79, output "First Class". Otherwise, output "Pass". Write out the summary.',
-    input_assumptions: 'Marks are non-negative integers between 0 and 100.',
-    expected_output: 'Total: 255 Average: 85 Grade: Distinction',
-    test_cases_json: JSON.stringify([
-      { id: 'tc-1', description: 'Average 85 Distinction', expectedOutput: 'Total: 255 Average: 85 Grade: Distinction' }
-    ]),
-    constraints: 'Use integer or packed arithmetic. Format output using string template or WRITE.',
-    hints_json: JSON.stringify([
-      'Calculate total = lv_mark1 + lv_mark2 + lv_mark3.',
-      'Divide total by 3 to find average.',
-      'Use IF / ELSEIF / ELSE structure to determine the grade text.'
-    ]),
-    starter_code: `DATA lv_mark1 TYPE i VALUE 80.
-DATA lv_mark2 TYPE i VALUE 90.
-DATA lv_mark3 TYPE i VALUE 85.
-
-* Calculate total and average
-DATA(lv_total) = lv_mark1 + lv_mark2 + lv_mark3.
-DATA(lv_avg)   = lv_total / 3.
-DATA lv_grade TYPE string.
-
-* Determine grade
-IF lv_avg >= 80.
-  lv_grade = 'Distinction'.
-ELSEIF lv_avg >= 60.
-  lv_grade = 'First Class'.
-ELSE.
-  lv_grade = 'Pass'.
-ENDIF.
-
-WRITE: / |Total: { lv_total } Average: { lv_avg } Grade: { lv_grade }|.`,
-    reference_solution: `DATA lv_mark1 TYPE i VALUE 80.
-DATA lv_mark2 TYPE i VALUE 90.
-DATA lv_mark3 TYPE i VALUE 85.
-
-DATA(lv_total) = lv_mark1 + lv_mark2 + lv_mark3.
-DATA(lv_avg)   = lv_total / 3.
-
-DATA(lv_grade) = COND string(
-  WHEN lv_avg >= 80 THEN 'Distinction'
-  WHEN lv_avg >= 60 THEN 'First Class'
-  ELSE 'Pass'
-).
-
-WRITE: / |Total: { lv_total } Average: { lv_avg } Grade: { lv_grade }|.`,
-    solution_explanation: 'The solution sums the three inputs, divides by 3 to obtain the integer mean, and uses conditional branching or COND to map the score range to the appropriate label.',
-    related_concepts_json: JSON.stringify(['Arithmetic Operators', 'COND #', 'String Templates', 'IF-ELSE'])
+    "id": "chal-01",
+    "title": "Order Total & Tax Calculator",
+    "category": "Variables & Arithmetic",
+    "difficulty": "easy",
+    "order_index": 1,
+    "problem_statement": "Implement an ABAP logic block that computes the net sales amount, 20% value-added tax (VAT), and final gross total for an order. Output the calculated values formatted with WRITE statements.",
+    "input_assumptions": "Assume net sales amount is 250.00 and VAT rate is 20 percent.",
+    "expected_output": "Net: 250.00\\nTax: 50\\nGross: 300",
+    "test_cases_json": "[{\"id\":\"tc-1\",\"description\":\"Net amount output\",\"expectedOutput\":\"Net: 250.00\"},{\"id\":\"tc-2\",\"description\":\"Tax amount output\",\"expectedOutput\":\"Tax: 50\"},{\"id\":\"tc-3\",\"description\":\"Gross total output\",\"expectedOutput\":\"Gross: 300\"}]",
+    "constraints": "Use elementary packed numbers or integers. Every ABAP statement must end with a period.",
+    "hints_json": "[\"Calculate tax using lv_tax_amount = lv_net_amount * lv_tax_rate / 100.\",\"Gross total is the sum of net amount and tax amount.\",\"Use WRITE: / to print each labeled line.\"]",
+    "starter_code": "DATA lv_net_amount TYPE p DECIMALS 2 VALUE '250.00'.\nDATA lv_tax_rate TYPE i VALUE 20.\nDATA lv_tax_amount TYPE p DECIMALS 2.\nDATA lv_gross_amount TYPE p DECIMALS 2.\n\n* Compute tax and gross amount here:\n* lv_tax_amount = ...\n* lv_gross_amount = ...\n\nWRITE: / 'Net:', lv_net_amount.\n* Output Tax and Gross:\n",
+    "reference_solution": "DATA lv_net_amount TYPE p DECIMALS 2 VALUE '250.00'.\nDATA lv_tax_rate TYPE i VALUE 20.\nDATA lv_tax_amount TYPE p DECIMALS 2.\nDATA lv_gross_amount TYPE p DECIMALS 2.\n\nlv_tax_amount = lv_net_amount * lv_tax_rate / 100.\nlv_gross_amount = lv_net_amount + lv_tax_amount.\n\nWRITE: / 'Net:', lv_net_amount.\nWRITE: / 'Tax:', lv_tax_amount.\nWRITE: / 'Gross:', lv_gross_amount.",
+    "solution_explanation": "Packed decimal types (TYPE P) are the standard for monetary calculations in SAP ABAP to prevent floating-point rounding inaccuracies. The arithmetic expression computes 20% of 250 (50) and adds it to 250 to achieve 300 gross.",
+    "related_concepts_json": "[\"Elementary Types\",\"Type P Packed Decimals\",\"Arithmetic Expressions\",\"WRITE Formatting\"]"
   },
   {
-    id: 'chal-02',
-    title: 'Internal Table Search & Filtering',
-    category: 'Internal Tables',
-    difficulty: 'easy',
-    order_index: 2,
-    problem_statement: 'Populate an internal table lt_numbers with values 15, 42, 8, 99, 23. Sort the table, and find the highest number and lowest number. Output them in the format: Lowest: 8 Highest: 99.',
-    input_assumptions: 'Internal table contains distinct integers.',
-    expected_output: 'Lowest: 8 Highest: 99',
-    test_cases_json: JSON.stringify([
-      { id: 'tc-1', description: 'Find min and max after sort', expectedOutput: 'Lowest: 8 Highest: 99' }
-    ]),
-    constraints: 'Sort the table ascending. Read index 1 for lowest, and lines( lt_numbers ) for highest.',
-    hints_json: JSON.stringify([
-      'Use APPEND or VALUE #( ... ) to populate lt_numbers.',
-      'Use SORT lt_numbers.',
-      'Use READ TABLE lt_numbers INDEX 1 INTO DATA(lv_low).',
-      'Use lines( lt_numbers ) to find the last index.'
-    ]),
-    starter_code: `DATA lt_numbers TYPE TABLE OF i.
-APPEND 15 TO lt_numbers.
-APPEND 42 TO lt_numbers.
-APPEND 8 TO lt_numbers.
-APPEND 99 TO lt_numbers.
-APPEND 23 TO lt_numbers.
-
-* Sort the table
-SORT lt_numbers.
-
-* Read lowest (index 1) and highest (last index)
-READ TABLE lt_numbers INDEX 1 INTO DATA(lv_low).
-READ TABLE lt_numbers INDEX 5 INTO DATA(lv_high).
-
-WRITE: / |Lowest: { lv_low } Highest: { lv_high }|.`,
-    reference_solution: `DATA lt_numbers TYPE TABLE OF i.
-APPEND 15 TO lt_numbers.
-APPEND 42 TO lt_numbers.
-APPEND 8 TO lt_numbers.
-APPEND 99 TO lt_numbers.
-APPEND 23 TO lt_numbers.
-
-SORT lt_numbers.
-
-READ TABLE lt_numbers INDEX 1 INTO DATA(lv_low).
-DATA(lv_last_idx) = lines( lt_numbers ).
-READ TABLE lt_numbers INDEX lv_last_idx INTO DATA(lv_high).
-
-WRITE: / |Lowest: { lv_low } Highest: { lv_high }|.`,
-    solution_explanation: 'After sorting an internal table ascending, the first row always contains the minimum value and the last row (at lines(lt_numbers)) contains the maximum value.',
-    related_concepts_json: JSON.stringify(['SORT', 'READ TABLE', 'lines()', 'Index Access'])
+    "id": "chal-02",
+    "title": "Conditional Discount & Loop Processor",
+    "category": "Conditions & Loops",
+    "difficulty": "easy",
+    "order_index": 2,
+    "problem_statement": "Iterate through 5 order tiers using a DO loop. For tiers 1 to 3, apply a 5 discount; for tiers 4 and 5, apply a 15 discount. Accumulate the total discount and output it.",
+    "input_assumptions": "Run the loop 5 times using sy-index as the tier indicator.",
+    "expected_output": "Total Discount: 45",
+    "test_cases_json": "[{\"id\":\"tc-1\",\"description\":\"Accumulated total discount matches 45\",\"expectedOutput\":\"Total Discount: 45\"}]",
+    "constraints": "Use DO 5 TIMES ... ENDDO and IF ... ELSE ... ENDIF constructs.",
+    "hints_json": "[\"sy-index contains the current iteration number from 1 to 5.\",\"Check if sy-index > 3 to add 15, otherwise add 5.\",\"Output using WRITE: / 'Total Discount:', lv_total_discount.\"]",
+    "starter_code": "DATA lv_total_discount TYPE i VALUE 0.\n\nDO 5 TIMES.\n  DATA(lv_tier) = sy-index.\n  * Implement tier condition:\n  * If tier > 3 add 15, else add 5\nENDDO.\n\nWRITE: / 'Total Discount:', lv_total_discount.",
+    "reference_solution": "DATA lv_total_discount TYPE i VALUE 0.\n\nDO 5 TIMES.\n  DATA(lv_tier) = sy-index.\n  IF lv_tier > 3.\n    lv_total_discount = lv_total_discount + 15.\n  ELSE.\n    lv_total_discount = lv_total_discount + 5.\n  ENDIF.\nENDDO.\n\nWRITE: / 'Total Discount:', lv_total_discount.",
+    "solution_explanation": "The loop executes 5 times. Tiers 1, 2, and 3 each add 5 (total 15). Tiers 4 and 5 each add 15 (total 30). 15 + 30 = 45 total discount accumulated in lv_total_discount.",
+    "related_concepts_json": "[\"DO Loops\",\"System Field sy-index\",\"Conditional IF-ELSE\",\"Accumulators\"]"
   },
   {
-    id: 'chal-03',
-    title: 'Object-Oriented Employee Tax Calculator',
-    category: 'Classes & Methods',
-    difficulty: 'medium',
-    order_index: 3,
-    problem_statement: 'Define a local class lcl_employee with private attributes mv_id, mv_name, mv_salary. Add public methods constructor, get_net_salary( iv_tax_rate ). If salary is 10000 and tax rate is 10, net salary is 9000. Output: Employee 101 Net Salary: 9000.',
-    input_assumptions: 'Tax rate is a percentage between 0 and 50.',
-    expected_output: 'Employee 101 Net Salary: 9000',
-    test_cases_json: JSON.stringify([
-      { id: 'tc-1', description: 'Calculate net after 10% tax', expectedOutput: 'Employee 101 Net Salary: 9000' }
-    ]),
-    constraints: 'Encapsulate salary in PRIVATE section. Compute net salary inside the method.',
-    hints_json: JSON.stringify([
-      'Class definition has PUBLIC and PRIVATE sections.',
-      'Deduct (mv_salary * iv_tax_rate) / 100 from mv_salary.',
-      'Instantiate using NEW lcl_employee( ... ).'
-    ]),
-    starter_code: `CLASS lcl_employee DEFINITION.
-  PUBLIC SECTION.
-    METHODS constructor
-      IMPORTING iv_id     TYPE i
-                iv_name   TYPE string
-                iv_salary TYPE i.
-    METHODS get_net_salary
-      IMPORTING iv_tax_rate TYPE i
-      RETURNING VALUE(rv_net) TYPE i.
-    METHODS get_id
-      RETURNING VALUE(rv_id) TYPE i.
-  PRIVATE SECTION.
-    DATA mv_id     TYPE i.
-    DATA mv_name   TYPE string.
-    DATA mv_salary TYPE i.
-ENDCLASS.
-
-CLASS lcl_employee IMPLEMENTATION.
-  METHOD constructor.
-    mv_id     = iv_id.
-    mv_name   = iv_name.
-    mv_salary = iv_salary.
-  ENDMETHOD.
-
-  METHOD get_id.
-    rv_id = mv_id.
-  ENDMETHOD.
-
-  METHOD get_net_salary.
-    DATA(lv_tax) = ( mv_salary * iv_tax_rate ) / 100.
-    rv_net = mv_salary - lv_tax.
-  ENDMETHOD.
-ENDCLASS.
-
-DATA(lo_emp) = NEW lcl_employee( iv_id = 101 iv_name = 'Learner' iv_salary = 10000 ).
-DATA(lv_net) = lo_emp->get_net_salary( 10 ).
-
-WRITE: / |Employee { lo_emp->get_id( ) } Net Salary: { lv_net }|.`,
-    reference_solution: `CLASS lcl_employee DEFINITION.
-  PUBLIC SECTION.
-    METHODS constructor
-      IMPORTING iv_id     TYPE i
-                iv_name   TYPE string
-                iv_salary TYPE i.
-    METHODS get_net_salary
-      IMPORTING iv_tax_rate TYPE i
-      RETURNING VALUE(rv_net) TYPE i.
-    METHODS get_id
-      RETURNING VALUE(rv_id) TYPE i.
-  PRIVATE SECTION.
-    DATA mv_id     TYPE i.
-    DATA mv_name   TYPE string.
-    DATA mv_salary TYPE i.
-ENDCLASS.
-
-CLASS lcl_employee IMPLEMENTATION.
-  METHOD constructor.
-    mv_id     = iv_id.
-    mv_name   = iv_name.
-    mv_salary = iv_salary.
-  ENDMETHOD.
-
-  METHOD get_id.
-    rv_id = mv_id.
-  ENDMETHOD.
-
-  METHOD get_net_salary.
-    rv_net = mv_salary - ( ( mv_salary * iv_tax_rate ) / 100 ).
-  ENDMETHOD.
-ENDCLASS.
-
-DATA(lo_emp) = NEW lcl_employee( iv_id = 101 iv_name = 'Learner' iv_salary = 10000 ).
-WRITE: / |Employee { lo_emp->get_id( ) } Net Salary: { lo_emp->get_net_salary( 10 ) }|.`,
-    solution_explanation: 'Demonstrates encapsulation: state attributes are stored safely in the PRIVATE section and accessed via well-defined public interface methods.',
-    related_concepts_json: JSON.stringify(['Local Classes', 'Encapsulation', 'Constructors', 'RETURNING Parameters'])
+    "id": "chal-03",
+    "title": "Flight Code & Booking String Parser",
+    "category": "Strings",
+    "difficulty": "easy",
+    "order_index": 3,
+    "problem_statement": "Given a composite flight reservation string formatted as AIRLINE-FLIGHTNO-ORIGIN-DEST (e.g. \"LH-0402-FRA-NYC\"), parse the components into separate variables using SPLIT and format a route summary.",
+    "input_assumptions": "Input string is \"LH-0402-FRA-NYC\" delimited by hyphens.",
+    "expected_output": "Airline: LH\\nFlight: 0402\\nRoute: FRA->NYC",
+    "test_cases_json": "[{\"id\":\"tc-1\",\"description\":\"Parsed airline code\",\"expectedOutput\":\"Airline: LH\"},{\"id\":\"tc-2\",\"description\":\"Parsed flight number\",\"expectedOutput\":\"Flight: 0402\"},{\"id\":\"tc-3\",\"description\":\"Formatted route interpolation\",\"expectedOutput\":\"Route: FRA->NYC\"}]",
+    "constraints": "Use SPLIT ... AT ... INTO ... and modern string templates |...|.",
+    "hints_json": "[\"Syntax: SPLIT lv_booking AT '-' INTO lv_airline lv_flight_no lv_origin lv_dest.\",\"Use string template |{ lv_origin }->{ lv_dest }| for the route.\"]",
+    "starter_code": "DATA lv_booking TYPE string VALUE 'LH-0402-FRA-NYC'.\nDATA lv_airline TYPE string.\nDATA lv_flight_no TYPE string.\nDATA lv_origin TYPE string.\nDATA lv_dest TYPE string.\n\n* Split the composite booking code here:\n\nWRITE: / 'Airline:', lv_airline.\nWRITE: / 'Flight:', lv_flight_no.\n* Output Route:\n",
+    "reference_solution": "DATA lv_booking TYPE string VALUE 'LH-0402-FRA-NYC'.\nDATA lv_airline TYPE string.\nDATA lv_flight_no TYPE string.\nDATA lv_origin TYPE string.\nDATA lv_dest TYPE string.\n\nSPLIT lv_booking AT '-' INTO lv_airline lv_flight_no lv_origin lv_dest.\n\nWRITE: / 'Airline:', lv_airline.\nWRITE: / 'Flight:', lv_flight_no.\nWRITE: / 'Route:', |{ lv_origin }->{ lv_dest }|.",
+    "solution_explanation": "The SPLIT statement breaks character strings across delimiters directly into target variables. String templates enclosed in pipes (|...|) allow clean expression interpolation inside curly braces without procedural concatenations.",
+    "related_concepts_json": "[\"String Manipulation\",\"SPLIT Statement\",\"String Templates |...|\",\"Variable Interpolation\"]"
+  },
+  {
+    "id": "chal-04",
+    "title": "Purchase Order Header Structure",
+    "category": "Structures",
+    "difficulty": "medium",
+    "order_index": 4,
+    "problem_statement": "Define a local structure type for purchase orders with fields po_number, vendor_id, currency, and net_value. Instantiate a work area structure, populate all fields, and output the purchase order summary.",
+    "input_assumptions": "PO Number: PO-90001, Vendor: VEND-501, Currency: EUR, Value: 15000.",
+    "expected_output": "PO Number: PO-90001\\nVendor: VEND-501\\nValue: 15000 EUR",
+    "test_cases_json": "[{\"id\":\"tc-1\",\"description\":\"PO Number field output\",\"expectedOutput\":\"PO Number: PO-90001\"},{\"id\":\"tc-2\",\"description\":\"Vendor ID field output\",\"expectedOutput\":\"Vendor: VEND-501\"},{\"id\":\"tc-3\",\"description\":\"Net value and currency output\",\"expectedOutput\":\"Value: 15000 EUR\"}]",
+    "constraints": "Use TYPES: BEGIN OF ... END OF and component access using hyphens (-).",
+    "hints_json": "[\"Access fields on work area ls_po using ls_po-po_number, ls_po-vendor_id, etc.\",\"Output formatted value with string template |{ ls_po-net_value } { ls_po-currency }|.\"]",
+    "starter_code": "TYPES: BEGIN OF ty_po,\n         po_number TYPE string,\n         vendor_id TYPE string,\n         currency  TYPE string,\n         net_value TYPE i,\n       END OF ty_po.\n\nDATA ls_po TYPE ty_po.\n\n* Populate ls_po fields here:\n\nWRITE: / 'PO Number:', ls_po-po_number.\nWRITE: / 'Vendor:', ls_po-vendor_id.\nWRITE: / 'Value:', |{ ls_po-net_value } { ls_po-currency }|.",
+    "reference_solution": "TYPES: BEGIN OF ty_po,\n         po_number TYPE string,\n         vendor_id TYPE string,\n         currency  TYPE string,\n         net_value TYPE i,\n       END OF ty_po.\n\nDATA ls_po TYPE ty_po.\nls_po-po_number = 'PO-90001'.\nls_po-vendor_id = 'VEND-501'.\nls_po-currency = 'EUR'.\nls_po-net_value = 15000.\n\nWRITE: / 'PO Number:', ls_po-po_number.\nWRITE: / 'Vendor:', ls_po-vendor_id.\nWRITE: / 'Value:', |{ ls_po-net_value } { ls_po-currency }|.",
+    "solution_explanation": "In ABAP, structures bundle multiple typed fields into a cohesive record. Component access uses the hyphen operator (ls_po-vendor_id). This forms the foundational work area concept used when iterating internal tables.",
+    "related_concepts_json": "[\"TYPES BEGIN OF\",\"Structure Work Areas\",\"Component Access Hyphen (-)\",\"Formatted Output\"]"
+  },
+  {
+    "id": "chal-05",
+    "title": "Material Inventory Internal Table",
+    "category": "Internal Tables",
+    "difficulty": "medium",
+    "order_index": 5,
+    "problem_statement": "Define a table of materials (matnr, stock). Append three material entries: MAT-A (150 units), MAT-B (80 units), MAT-C (220 units). Loop through the table to calculate total warehouse stock and total item count.",
+    "input_assumptions": "Append items in sequence and accumulate stock.",
+    "expected_output": "Total Stock: 450\\nCount: 3",
+    "test_cases_json": "[{\"id\":\"tc-1\",\"description\":\"Total aggregated inventory stock\",\"expectedOutput\":\"Total Stock: 450\"},{\"id\":\"tc-2\",\"description\":\"Table line count\",\"expectedOutput\":\"Count: 3\"}]",
+    "constraints": "Use STANDARD TABLE OF, APPEND ... TO ..., LOOP AT ... INTO ..., and lines( ).",
+    "hints_json": "[\"Use APPEND ls_item TO lt_inventory to push rows.\",\"Accumulate with lv_total_stock = lv_total_stock + ls_item-stock inside the loop.\",\"Use lines( lt_inventory ) to count rows.\"]",
+    "starter_code": "TYPES: BEGIN OF ty_material,\n         matnr TYPE string,\n         stock TYPE i,\n       END OF ty_material.\n\nDATA lt_inventory TYPE STANDARD TABLE OF ty_material.\nDATA ls_item TYPE ty_material.\n\n* Append MAT-A (150), MAT-B (80), and MAT-C (220):\n\nDATA lv_total_stock TYPE i VALUE 0.\n* Loop through lt_inventory and accumulate stock:\n\nWRITE: / 'Total Stock:', lv_total_stock.\nWRITE: / 'Count:', lines( lt_inventory ).",
+    "reference_solution": "TYPES: BEGIN OF ty_material,\n         matnr TYPE string,\n         stock TYPE i,\n       END OF ty_material.\n\nDATA lt_inventory TYPE STANDARD TABLE OF ty_material.\nDATA ls_item TYPE ty_material.\n\nls_item-matnr = 'MAT-A'.\nls_item-stock = 150.\nAPPEND ls_item TO lt_inventory.\n\nls_item-matnr = 'MAT-B'.\nls_item-stock = 80.\nAPPEND ls_item TO lt_inventory.\n\nls_item-matnr = 'MAT-C'.\nls_item-stock = 220.\nAPPEND ls_item TO lt_inventory.\n\nDATA lv_total_stock TYPE i VALUE 0.\nLOOP AT lt_inventory INTO ls_item.\n  lv_total_stock = lv_total_stock + ls_item-stock.\nENDLOOP.\n\nWRITE: / 'Total Stock:', lv_total_stock.\nWRITE: / 'Count:', lines( lt_inventory ).",
+    "solution_explanation": "Internal tables are dynamic arrays in ABAP. The work area ls_item is loaded into the table with APPEND. The LOOP AT construct iterates row by row, loading each row into ls_item where sy-tabix tracks the 1-based index.",
+    "related_concepts_json": "[\"STANDARD TABLE\",\"APPEND Statement\",\"LOOP AT INTO\",\"Built-in Function lines()\"]"
+  },
+  {
+    "id": "chal-06",
+    "title": "Binary Search & Read Table",
+    "category": "Searching & Sorting",
+    "difficulty": "medium",
+    "order_index": 6,
+    "problem_statement": "Given a customer dataset stored in a SORTED TABLE with unique key id, use READ TABLE WITH KEY to locate customer \"C02\". Verify sy-subrc is 0 and output the found customer name and tier.",
+    "input_assumptions": "Dataset contains C01 (Alpha Corp, Gold), C02 (Beta Ltd, Silver), and C03 (Gamma AG, Platinum).",
+    "expected_output": "Found: Beta Ltd\\nTier: Silver",
+    "test_cases_json": "[{\"id\":\"tc-1\",\"description\":\"Customer name found via key\",\"expectedOutput\":\"Found: Beta Ltd\"},{\"id\":\"tc-2\",\"description\":\"Customer tier found via key\",\"expectedOutput\":\"Tier: Silver\"}]",
+    "constraints": "Use READ TABLE WITH KEY and check sy-subrc.",
+    "hints_json": "[\"Syntax: READ TABLE lt_cust INTO ls_cust WITH KEY id = 'C02'.\",\"Check IF sy-subrc = 0 to verify the key was located.\"]",
+    "starter_code": "TYPES: BEGIN OF ty_cust,\n         id   TYPE string,\n         name TYPE string,\n         tier TYPE string,\n       END OF ty_cust.\n\nDATA lt_cust TYPE SORTED TABLE OF ty_cust WITH UNIQUE KEY id.\nDATA ls_cust TYPE ty_cust.\n\nls_cust-id = 'C01'. ls_cust-name = 'Alpha Corp'. ls_cust-tier = 'Gold'. APPEND ls_cust TO lt_cust.\nls_cust-id = 'C02'. ls_cust-name = 'Beta Ltd'. ls_cust-tier = 'Silver'. APPEND ls_cust TO lt_cust.\nls_cust-id = 'C03'. ls_cust-name = 'Gamma AG'. ls_cust-tier = 'Platinum'. APPEND ls_cust TO lt_cust.\n\n* Read customer C02 by key:\n* Check sy-subrc and output Found name and Tier",
+    "reference_solution": "TYPES: BEGIN OF ty_cust,\n         id   TYPE string,\n         name TYPE string,\n         tier TYPE string,\n       END OF ty_cust.\n\nDATA lt_cust TYPE SORTED TABLE OF ty_cust WITH UNIQUE KEY id.\nDATA ls_cust TYPE ty_cust.\n\nls_cust-id = 'C01'. ls_cust-name = 'Alpha Corp'. ls_cust-tier = 'Gold'.\nAPPEND ls_cust TO lt_cust.\nls_cust-id = 'C02'. ls_cust-name = 'Beta Ltd'. ls_cust-tier = 'Silver'.\nAPPEND ls_cust TO lt_cust.\nls_cust-id = 'C03'. ls_cust-name = 'Gamma AG'. ls_cust-tier = 'Platinum'.\nAPPEND ls_cust TO lt_cust.\n\nREAD TABLE lt_cust INTO ls_cust WITH KEY id = 'C02'.\nIF sy-subrc = 0.\n  WRITE: / 'Found:', ls_cust-name.\n  WRITE: / 'Tier:', ls_cust-tier.\nELSE.\n  WRITE: / 'Not Found'.\nENDIF.",
+    "solution_explanation": "Sorted tables maintain rows in sorted order according to their key. A READ TABLE on a sorted table by primary key performs an automatic logarithmic binary search O(log N). A return code of sy-subrc = 0 signifies success.",
+    "related_concepts_json": "[\"SORTED TABLE\",\"READ TABLE WITH KEY\",\"System Field sy-subrc\",\"Binary Search Complexity\"]"
+  },
+  {
+    "id": "chal-07",
+    "title": "Account Ledger Class",
+    "category": "Classes & Methods",
+    "difficulty": "hard",
+    "order_index": 7,
+    "problem_statement": "Construct a local ABAP class lcl_ledger with private attributes for account identifier and balance. Provide public methods constructor, deposit, get_balance, and get_account. Instantiate the class, make two deposits (500 and 250), and display account details.",
+    "input_assumptions": "Account ID is \"ACC-8801\", initial balance is 0, deposits are 500 and 250.",
+    "expected_output": "Account: ACC-8801\\nBalance: 750",
+    "test_cases_json": "[{\"id\":\"tc-1\",\"description\":\"Account ID from getter method\",\"expectedOutput\":\"Account: ACC-8801\"},{\"id\":\"tc-2\",\"description\":\"Calculated balance after deposits\",\"expectedOutput\":\"Balance: 750\"}]",
+    "constraints": "Follow Clean ABAP encapsulation principles: private attributes and public accessor methods.",
+    "hints_json": "[\"Declare attributes mv_account and mv_balance in PRIVATE SECTION.\",\"Declare METHODS constructor, deposit, get_balance, and get_account in PUBLIC SECTION.\",\"Instantiate using CREATE OBJECT lo_ledger EXPORTING iv_account = 'ACC-8801'.\"]",
+    "starter_code": "CLASS lcl_ledger DEFINITION.\n  PUBLIC SECTION.\n    METHODS:\n      constructor IMPORTING iv_account TYPE string,\n      deposit IMPORTING iv_amount TYPE i,\n      get_balance RETURNING VALUE(rv_balance) TYPE i,\n      get_account RETURNING VALUE(rv_acc) TYPE string.\n  PRIVATE SECTION.\n    DATA mv_account TYPE string.\n    DATA mv_balance TYPE i.\nENDCLASS.\n\nCLASS lcl_ledger IMPLEMENTATION.\n  * Implement constructor, deposit, get_balance, get_account\nENDCLASS.\n\nSTART-OF-SELECTION.\n  DATA lo_ledger TYPE REF TO lcl_ledger.\n  * Create object and make deposits:\n",
+    "reference_solution": "CLASS lcl_ledger DEFINITION.\n  PUBLIC SECTION.\n    METHODS:\n      constructor IMPORTING iv_account TYPE string,\n      deposit IMPORTING iv_amount TYPE i,\n      get_balance RETURNING VALUE(rv_balance) TYPE i,\n      get_account RETURNING VALUE(rv_acc) TYPE string.\n  PRIVATE SECTION.\n    DATA mv_account TYPE string.\n    DATA mv_balance TYPE i.\nENDCLASS.\n\nCLASS lcl_ledger IMPLEMENTATION.\n  METHOD constructor.\n    mv_account = iv_account.\n    mv_balance = 0.\n  ENDMETHOD.\n  METHOD deposit.\n    mv_balance = mv_balance + iv_amount.\n  ENDMETHOD.\n  METHOD get_balance.\n    rv_balance = mv_balance.\n  ENDMETHOD.\n  METHOD get_account.\n    rv_acc = mv_account.\n  ENDMETHOD.\nENDCLASS.\n\nSTART-OF-SELECTION.\n  DATA lo_ledger TYPE REF TO lcl_ledger.\n  CREATE OBJECT lo_ledger EXPORTING iv_account = 'ACC-8801'.\n  lo_ledger->deposit( 500 ).\n  lo_ledger->deposit( 250 ).\n\n  WRITE: / 'Account:', lo_ledger->get_account( ).\n  WRITE: / 'Balance:', lo_ledger->get_balance( ).",
+    "solution_explanation": "Object-Oriented ABAP encapsulates internal state in private member variables (mv_*). Callers interact strictly through public instance methods. Functional methods with RETURNING parameters allow direct inline evaluation in expressions and WRITE statements.",
+    "related_concepts_json": "[\"CLASS DEFINITION / IMPLEMENTATION\",\"Encapsulation & Visibility\",\"Constructors\",\"Functional Methods\"]"
+  },
+  {
+    "id": "chal-08",
+    "title": "Safe Division Exception Handler",
+    "category": "Exceptions",
+    "difficulty": "hard",
+    "order_index": 8,
+    "problem_statement": "Define a custom exception class lcx_zero_divide inheriting from cx_static_check. In a calculator class, implement a divide method that raises lcx_zero_divide if the denominator is 0. In the main routine, invoke divide safely inside a TRY ... CATCH block and intercept the zero division.",
+    "input_assumptions": "First division is 100 / 4 (= 25). Second division is 100 / 0 (triggers exception).",
+    "expected_output": "Result: 25\\nError: Division by zero intercepted",
+    "test_cases_json": "[{\"id\":\"tc-1\",\"description\":\"Successful division result\",\"expectedOutput\":\"Result: 25\"},{\"id\":\"tc-2\",\"description\":\"Intercepted exception error message\",\"expectedOutput\":\"Error: Division by zero intercepted\"}]",
+    "constraints": "Use RAISE EXCEPTION TYPE and TRY ... CATCH ... ENDTRY constructs.",
+    "hints_json": "[\"Declare class lcx_zero_divide DEFINITION INHERITING FROM cx_static_check.\",\"Check IF iv_denom = 0. RAISE EXCEPTION TYPE lcx_zero_divide. ENDIF.\",\"Wrap invocations in TRY. ... CATCH lcx_zero_divide. ... ENDTRY.\"]",
+    "starter_code": "CLASS lcx_zero_divide DEFINITION INHERITING FROM cx_static_check.\nENDCLASS.\n\nCLASS lcl_math DEFINITION.\n  PUBLIC SECTION.\n    METHODS divide\n      IMPORTING iv_num TYPE i iv_denom TYPE i\n      RETURNING VALUE(rv_res) TYPE i\n      RAISING lcx_zero_divide.\nENDCLASS.\n\nCLASS lcl_math IMPLEMENTATION.\n  * Implement divide method checking for zero denominator:\nENDCLASS.\n\nSTART-OF-SELECTION.\n  DATA lo_math TYPE REF TO lcl_math.\n  CREATE OBJECT lo_math.\n  * Use TRY ... CATCH to execute 100 / 4 and 100 / 0:\n",
+    "reference_solution": "CLASS lcx_zero_divide DEFINITION INHERITING FROM cx_static_check.\nENDCLASS.\n\nCLASS lcl_math DEFINITION.\n  PUBLIC SECTION.\n    METHODS divide\n      IMPORTING iv_num TYPE i iv_denom TYPE i\n      RETURNING VALUE(rv_res) TYPE i\n      RAISING lcx_zero_divide.\nENDCLASS.\n\nCLASS lcl_math IMPLEMENTATION.\n  METHOD divide.\n    IF iv_denom = 0.\n      RAISE EXCEPTION TYPE lcx_zero_divide.\n    ENDIF.\n    rv_res = iv_num / iv_denom.\n  ENDMETHOD.\nENDCLASS.\n\nSTART-OF-SELECTION.\n  DATA lo_math TYPE REF TO lcl_math.\n  CREATE OBJECT lo_math.\n  TRY.\n    DATA(lv_res) = lo_math->divide( iv_num = 100 iv_denom = 4 ).\n    WRITE: / 'Result:', lv_res.\n    DATA(lv_err) = lo_math->divide( iv_num = 100 iv_denom = 0 ).\n    WRITE: / 'Never reached'.\n  CATCH lcx_zero_divide.\n    WRITE: / 'Error: Division by zero intercepted'.\n  ENDTRY.",
+    "solution_explanation": "Class-based exceptions derived from cx_static_check enforce compile-time verification: any caller must either handle the exception with CATCH or declare RAISING in its method signature. The TRY/CATCH block prevents runtime dump CX_SY_ZERODIVIDE.",
+    "related_concepts_json": "[\"Class-Based Exceptions\",\"cx_static_check\",\"TRY-CATCH-ENDTRY\",\"RAISE EXCEPTION TYPE\"]"
+  },
+  {
+    "id": "chal-09",
+    "title": "Modern SQL & Filtered Internal Tables",
+    "category": "Modern SQL & CDS",
+    "difficulty": "hard",
+    "order_index": 9,
+    "problem_statement": "Process sales orders stored in an internal table simulating an Open SQL query result. Filter rows where order status is open (\"O\") using LOOP AT ... WHERE status = 'O'. Sum the total amount of open orders and output the result.",
+    "input_assumptions": "Orders: SO-101 (1200, O), SO-102 (800, C), SO-103 (2500, O).",
+    "expected_output": "Open Orders Total: 3700",
+    "test_cases_json": "[{\"id\":\"tc-1\",\"description\":\"Calculated open orders total\",\"expectedOutput\":\"Open Orders Total: 3700\"}]",
+    "constraints": "Use LOOP AT ... WHERE condition to filter rows directly.",
+    "hints_json": "[\"Syntax: LOOP AT lt_orders INTO ls_order WHERE status = 'O'.\",\"Accumulate open totals: lv_open_total = lv_open_total + ls_order-amount.\"]",
+    "starter_code": "TYPES: BEGIN OF ty_sales,\n         order_id TYPE string,\n         customer TYPE string,\n         amount   TYPE i,\n         status   TYPE string,\n       END OF ty_sales.\n\nDATA lt_orders TYPE STANDARD TABLE OF ty_sales.\nDATA ls_order TYPE ty_sales.\n\nls_order-order_id = 'SO-101'. ls_order-customer = 'Cust-A'. ls_order-amount = 1200. ls_order-status = 'O'. APPEND ls_order TO lt_orders.\nls_order-order_id = 'SO-102'. ls_order-customer = 'Cust-B'. ls_order-amount = 800. ls_order-status = 'C'. APPEND ls_order TO lt_orders.\nls_order-order_id = 'SO-103'. ls_order-customer = 'Cust-C'. ls_order-amount = 2500. ls_order-status = 'O'. APPEND ls_order TO lt_orders.\n\nDATA lv_open_total TYPE i VALUE 0.\n* Filter and accumulate open orders:\n\nWRITE: / 'Open Orders Total:', lv_open_total.",
+    "reference_solution": "TYPES: BEGIN OF ty_sales,\n         order_id TYPE string,\n         customer TYPE string,\n         amount   TYPE i,\n         status   TYPE string,\n       END OF ty_sales.\n\nDATA lt_orders TYPE STANDARD TABLE OF ty_sales.\nDATA ls_order TYPE ty_sales.\n\nls_order-order_id = 'SO-101'. ls_order-customer = 'Cust-A'. ls_order-amount = 1200. ls_order-status = 'O'.\nAPPEND ls_order TO lt_orders.\nls_order-order_id = 'SO-102'. ls_order-customer = 'Cust-B'. ls_order-amount = 800. ls_order-status = 'C'.\nAPPEND ls_order TO lt_orders.\nls_order-order_id = 'SO-103'. ls_order-customer = 'Cust-C'. ls_order-amount = 2500. ls_order-status = 'O'.\nAPPEND ls_order TO lt_orders.\n\nDATA lv_open_total TYPE i VALUE 0.\nLOOP AT lt_orders INTO ls_order WHERE status = 'O'.\n  lv_open_total = lv_open_total + ls_order-amount.\nENDLOOP.\n\nWRITE: / 'Open Orders Total:', lv_open_total.",
+    "solution_explanation": "The WHERE clause in LOOP AT filters rows efficiently without needing manual IF nesting inside the loop body. In real SAP HANA scenarios, this corresponds to pushing down filtering to the Open SQL WHERE clause before loading into application server memory.",
+    "related_concepts_json": "[\"LOOP AT WHERE\",\"Table Filtering\",\"SQL Pushdown Mindset\",\"Aggregation Patterns\"]"
+  },
+  {
+    "id": "chal-10",
+    "title": "RAP EML Booking Status Simulator",
+    "category": "RAP & Business Objects",
+    "difficulty": "hard",
+    "order_index": 10,
+    "problem_statement": "Simulate a RAP custom action acceptBooking executed via Entity Manipulation Language (EML). For booking \"BKG-01\" with status \"N\" (New), execute an update changing status to \"A\" (Accepted) using MODIFY. Then read the updated booking by key and output the verified status.",
+    "input_assumptions": "Bookings table has BKG-01 (status N) and BKG-02 (status N). Action targets BKG-01.",
+    "expected_output": "Booking: BKG-01\\nStatus: A",
+    "test_cases_json": "[{\"id\":\"tc-1\",\"description\":\"Updated booking ID verified\",\"expectedOutput\":\"Booking: BKG-01\"},{\"id\":\"tc-2\",\"description\":\"Updated booking status confirmed Accepted\",\"expectedOutput\":\"Status: A\"}]",
+    "constraints": "Update the row in place and confirm with READ TABLE WITH KEY.",
+    "hints_json": "[\"Find the booking with LOOP AT ... WHERE booking_id = 'BKG-01'.\",\"Set ls_b-status = 'A' and update using MODIFY lt_bookings FROM ls_b.\",\"Read the row with READ TABLE lt_bookings INTO ls_b WITH KEY booking_id = 'BKG-01'.\"]",
+    "starter_code": "TYPES: BEGIN OF ty_booking_entity,\n         booking_id TYPE string,\n         customer   TYPE string,\n         status     TYPE string,\n       END OF ty_booking_entity.\n\nDATA lt_bookings TYPE STANDARD TABLE OF ty_booking_entity.\nDATA ls_b TYPE ty_booking_entity.\n\nls_b-booking_id = 'BKG-01'. ls_b-customer = 'C-100'. ls_b-status = 'N'. APPEND ls_b TO lt_bookings.\nls_b-booking_id = 'BKG-02'. ls_b-customer = 'C-200'. ls_b-status = 'N'. APPEND ls_b TO lt_bookings.\n\n* Simulate EML: Update status of BKG-01 to 'A':\n\n* Read back updated entity and output Booking and Status:\n",
+    "reference_solution": "TYPES: BEGIN OF ty_booking_entity,\n         booking_id TYPE string,\n         customer   TYPE string,\n         status     TYPE string,\n       END OF ty_booking_entity.\n\nDATA lt_bookings TYPE STANDARD TABLE OF ty_booking_entity.\nDATA ls_b TYPE ty_booking_entity.\n\nls_b-booking_id = 'BKG-01'. ls_b-customer = 'C-100'. ls_b-status = 'N'.\nAPPEND ls_b TO lt_bookings.\nls_b-booking_id = 'BKG-02'. ls_b-customer = 'C-200'. ls_b-status = 'N'.\nAPPEND ls_b TO lt_bookings.\n\nLOOP AT lt_bookings INTO ls_b WHERE booking_id = 'BKG-01'.\n  ls_b-status = 'A'.\n  MODIFY lt_bookings FROM ls_b.\nENDLOOP.\n\nREAD TABLE lt_bookings INTO ls_b WITH KEY booking_id = 'BKG-01'.\nWRITE: / 'Booking:', ls_b-booking_id.\nWRITE: / 'Status:', ls_b-status.",
+    "solution_explanation": "In the ABAP RESTful Application Programming Model (RAP), business logic operates on transactional entities using EML statements (MODIFY ENTITIES / READ ENTITIES). This exercise demonstrates modifying entity transactional buffer state and verifying the result.",
+    "related_concepts_json": "[\"RAP Entity Lifecycle\",\"EML MODIFY / READ\",\"Transactional Buffer\",\"State Machines\"]"
   }
 ];
 
 export const SEED_QUIZZES = [
   {
-    id: 'quiz-fnd-1',
-    lesson_id: 'les-fnd-01',
-    module_id: 'mod-fnd-1',
-    title: 'ABAP Architecture & Tooling Assessment',
-    description: 'Test your understanding of the ABAP runtime, ADT vs SAP GUI, packages, and work processes.',
-    mode: 'practice',
-    passing_score: 75,
-    questions: [
+    "id": "quiz-fnd-1",
+    "lesson_id": "les-fnd-01",
+    "module_id": "mod-fnd-1",
+    "title": "ABAP Architecture & Tooling Assessment",
+    "description": "Verify your understanding of the 3-tier SAP NetWeaver architecture, ADT on Eclipse, packages, and transport management.",
+    "mode": "assessment",
+    "passing_score": 80,
+    "questions": [
       {
-        id: 'q1',
-        question_type: 'multiple_choice',
-        question: 'Which tool is the mandatory standard IDE for modern ABAP development on SAP S/4HANA and BTP?',
-        options_json: JSON.stringify([
-          'SAP GUI transaction SE38',
-          'ABAP Development Tools (ADT) in Eclipse',
-          'Visual Studio Code with Python plugin',
-          'SAP GUI transaction SE80'
-        ]),
-        correct_answer_json: JSON.stringify('ABAP Development Tools (ADT) in Eclipse'),
-        explanation: 'ADT on Eclipse is the official and required development environment for Core Data Services (CDS), RAP, and modern ABAP syntax.',
-        difficulty: 'easy',
-        topic: 'Tooling'
+        "id": "q-fnd-101",
+        "quiz_id": "quiz-fnd-1",
+        "question_type": "multiple_choice",
+        "question": "Which interface allows an ABAP class to be executed directly in ADT via F9 (Run as ABAP Application)?",
+        "options_json": "[\"if_serializable_object\",\"if_oo_adt_classrun\",\"if_amdp_marker_hdb\",\"if_t100_message\"]",
+        "correct_answer_json": "\"if_oo_adt_classrun\"",
+        "explanation": "Implementing if_oo_adt_classrun provides the main( out ) method, which the ADT console executes when you press F9.",
+        "difficulty": "easy",
+        "topic": "Tooling & ADT"
       },
       {
-        id: 'q2',
-        question_type: 'true_false',
-        question: 'Development objects stored in package $TMP can be easily added to a transport request and sent to the Quality Assurance system.',
-        options_json: JSON.stringify(['True', 'False']),
-        correct_answer_json: JSON.stringify('False'),
-        explanation: 'Package $TMP is for local, temporary objects only. They cannot be attached to a Transport Request (TR) or transported across systems.',
-        difficulty: 'easy',
-        topic: 'Packages'
+        "id": "q-fnd-102",
+        "quiz_id": "quiz-fnd-1",
+        "question_type": "true_false",
+        "question": "In modern ABAP development with ADT, source code compilation occurs locally on the developer machine inside Eclipse.",
+        "options_json": "[\"True\",\"False\"]",
+        "correct_answer_json": "\"False\"",
+        "explanation": "Eclipse ADT communicates with the SAP Application Server via RFC/REST backend endpoints. All compilation and activation occurs on the SAP server.",
+        "difficulty": "easy",
+        "topic": "Architecture"
       },
       {
-        id: 'q3',
-        question_type: 'output_prediction',
-        question: 'What is the output of the following ABAP statement:\nDATA(lv_val) = 5 + 3 * 2.\nWRITE lv_val.',
-        options_json: JSON.stringify(['16', '11', '10', 'Syntax Error']),
-        correct_answer_json: JSON.stringify('11'),
-        explanation: 'In ABAP expressions, standard operator precedence applies (* has higher priority than +), resulting in 3 * 2 = 6, plus 5 = 11.',
-        difficulty: 'medium',
-        topic: 'Expressions'
+        "id": "q-fnd-103",
+        "quiz_id": "quiz-fnd-1",
+        "question_type": "multiple_choice",
+        "question": "Which package prefix in SAP ABAP is designated for local, non-transportable sandbox objects?",
+        "options_json": "[\"$TMP\",\"ZLOCAL\",\"YDEV\",\"$PROD\"]",
+        "correct_answer_json": "\"$TMP\"",
+        "explanation": "Objects created in $TMP (or any subpackage starting with $) are local and not recorded in transport requests.",
+        "difficulty": "easy",
+        "topic": "Packages & Transports"
       },
       {
-        id: 'q4',
-        question_type: 'find_error',
-        question: 'Identify the error in this string template:\nDATA(msg) = |Customer ID: {lv_cust_id}|.',
-        options_json: JSON.stringify([
-          'The pipe symbol | cannot be used in inline declarations.',
-          'Missing spaces between the curly braces and the variable name: { lv_cust_id }.',
-          'Double quotes must be used instead of pipes.',
-          'No error exists.'
-        ]),
-        correct_answer_json: JSON.stringify('Missing spaces between the curly braces and the variable name: { lv_cust_id }.'),
-        explanation: 'ABAP string templates strictly enforce whitespace formatting around curly brace expressions: |...{ expr }...|.',
-        difficulty: 'medium',
-        topic: 'Syntax'
+        "id": "q-fnd-104",
+        "quiz_id": "quiz-fnd-1",
+        "question_type": "multiple_select",
+        "question": "Which layers comprise the classic 3-tier SAP client-server architecture?",
+        "options_json": "[\"Presentation Layer (SAP GUI / Web Browser)\",\"Application Layer (ABAP Application Server)\",\"Database Layer (SAP HANA / AnyDB)\",\"Microservice Orchestration Layer\"]",
+        "correct_answer_json": "[\"Presentation Layer (SAP GUI / Web Browser)\",\"Application Layer (ABAP Application Server)\",\"Database Layer (SAP HANA / AnyDB)\"]",
+        "explanation": "The classic SAP architecture consists strictly of Presentation, Application, and Database layers.",
+        "difficulty": "medium",
+        "topic": "Architecture"
+      },
+      {
+        "id": "q-fnd-105",
+        "quiz_id": "quiz-fnd-1",
+        "question_type": "scenario_based",
+        "question": "A developer activates an ABAP class in ADT and receives a syntax error in the Problems tab. What is the status of the previously active runtime version on the server?",
+        "options_json": "[\"The class is deleted until fixed\",\"The previously active runtime version remains executable while the inactive draft contains the error\",\"The application server crashes\",\"All database access is locked\"]",
+        "correct_answer_json": "\"The previously active runtime version remains executable while the inactive draft contains the error\"",
+        "explanation": "ABAP maintains active and inactive object states. Runtime execution continues using the last successfully activated state until the new version activates cleanly.",
+        "difficulty": "medium",
+        "topic": "ADT Workflow"
       }
     ]
   },
   {
-    id: 'quiz-fnd-2',
-    lesson_id: 'les-fnd-04',
-    module_id: 'mod-fnd-4',
-    title: 'Internal Tables Mastery Quiz',
-    description: 'Comprehensive assessment on Standard, Sorted, and Hashed table properties, performance, and key expressions.',
-    mode: 'assessment',
-    passing_score: 80,
-    questions: [
+    "id": "quiz-fnd-2",
+    "lesson_id": "les-fnd-02",
+    "module_id": "mod-fnd-2",
+    "title": "Elementary Types, Structures & Operators",
+    "description": "Test your understanding of elementary types, packed numbers, structure work areas, and modern string templates.",
+    "mode": "practice",
+    "passing_score": 80,
+    "questions": [
       {
-        id: 'q5',
-        question_type: 'multiple_choice',
-        question: 'Which internal table type guarantees O(1) constant time access when reading by unique key?',
-        options_json: JSON.stringify([
-          'Standard Table',
-          'Sorted Table with NON-UNIQUE key',
-          'Hashed Table with UNIQUE key',
-          'Index Table'
-        ]),
-        correct_answer_json: JSON.stringify('Hashed Table with UNIQUE key'),
-        explanation: 'Hashed tables compute memory addresses using a hash function, resulting in O(1) performance independent of record count.',
-        difficulty: 'medium',
-        topic: 'Internal Tables'
+        "id": "q-fnd-201",
+        "quiz_id": "quiz-fnd-2",
+        "question_type": "multiple_choice",
+        "question": "Which elementary data type is mandatory for accurate currency and monetary calculations in ABAP?",
+        "options_json": "[\"Type F (Floating Point)\",\"Type P (Packed Decimal)\",\"Type I (4-byte Integer)\",\"Type C (Character)\"]",
+        "correct_answer_json": "\"Type P (Packed Decimal)\"",
+        "explanation": "Type P represents binary-coded decimal numbers, avoiding IEEE-754 floating-point rounding errors in commercial transactions.",
+        "difficulty": "easy",
+        "topic": "Data Types"
       },
       {
-        id: 'q6',
-        question_type: 'multiple_select',
-        question: 'Which of the following operations are valid on a Sorted Table? (Select all that apply)',
-        options_json: JSON.stringify([
-          'INSERT ... INTO TABLE ...',
-          'APPEND ... TO ... without checking sort order',
-          'READ TABLE ... WITH KEY ...',
-          'READ TABLE ... INDEX ...'
-        ]),
-        correct_answer_json: JSON.stringify([
-          'INSERT ... INTO TABLE ...',
-          'READ TABLE ... WITH KEY ...',
-          'READ TABLE ... INDEX ...'
-        ]),
-        explanation: 'Sorted tables support index access and key reads, and INSERT automatically places the row in sorted order. APPEND is only allowed if the new entry preserves the existing sort order, otherwise it raises an exception.',
-        difficulty: 'hard',
-        topic: 'Internal Tables'
+        "id": "q-fnd-202",
+        "quiz_id": "quiz-fnd-2",
+        "question_type": "output_prediction",
+        "question": "What is the exact output of this ABAP code snippet?\\n\\nDATA(lv_num) = 15.\\nDATA(lv_text) = |Item #{ lv_num WIDTH = 4 PAD = \"0\" }|.\\nWRITE: / lv_text.",
+        "options_json": "[\"Item #15\",\"Item #0015\",\"Item #1500\",\"Item # 15\"]",
+        "correct_answer_json": "\"Item #0015\"",
+        "explanation": "String template formatting options WIDTH = 4 and PAD = \"0\" left-pad the two-digit integer 15 into four characters: 0015.",
+        "difficulty": "medium",
+        "topic": "String Templates"
       },
       {
-        id: 'q7',
-        question_type: 'scenario_based',
-        question: 'You need to buffer a lookup table of 500,000 currency rates in memory, queried millions of times by currency code. Which table type should you choose?',
-        options_json: JSON.stringify([
-          'STANDARD TABLE with linear scan',
-          'HASHED TABLE with UNIQUE KEY currency_code',
-          'SORTED TABLE with NON-UNIQUE key',
-          'STANDARD TABLE sorted after every insert'
-        ]),
-        correct_answer_json: JSON.stringify('HASHED TABLE with UNIQUE KEY currency_code'),
-        explanation: 'For high-frequency key-based lookups with large record counts, HASHED TABLE provides the highest throughput with constant O(1) access time.',
-        difficulty: 'hard',
-        topic: 'Performance'
+        "id": "q-fnd-203",
+        "quiz_id": "quiz-fnd-2",
+        "question_type": "find_error",
+        "question": "Identify the error in this statement: DATA lv_price TYPE p VALUE '129.99'.",
+        "options_json": "[\"Type P variables cannot use single quotes for initial values\",\"Type P requires explicit DECIMALS declaration to store fractional values; otherwise decimals are truncated\",\"Variable name cannot start with lv_\",\"VALUE keyword cannot be used with TYPE P\"]",
+        "correct_answer_json": "\"Type P requires explicit DECIMALS declaration to store fractional values; otherwise decimals are truncated\"",
+        "explanation": "Without DECIMALS n, TYPE P defaults to 0 decimal places, so '129.99' would be stored as 130 or 129.",
+        "difficulty": "medium",
+        "topic": "Data Types"
+      },
+      {
+        "id": "q-fnd-204",
+        "quiz_id": "quiz-fnd-2",
+        "question_type": "multiple_choice",
+        "question": "How do you access component \"amount\" in work area structure \"ls_order\"?",
+        "options_json": "[\"ls_order.amount\",\"ls_order->amount\",\"ls_order-amount\",\"ls_order::amount\"]",
+        "correct_answer_json": "\"ls_order-amount\"",
+        "explanation": "ABAP uses the hyphen (-) for structure component access. The arrow (->) is reserved for object instance dereferencing.",
+        "difficulty": "easy",
+        "topic": "Structures"
+      },
+      {
+        "id": "q-fnd-205",
+        "quiz_id": "quiz-fnd-2",
+        "question_type": "multiple_choice",
+        "question": "What does the modern constructor expression CORRESPONDING #( ... ) do?",
+        "options_json": "[\"Compares two tables for identity\",\"Copies fields with matching names between different structures\",\"Creates a foreign key constraint\",\"Translates text between languages\"]",
+        "correct_answer_json": "\"Copies fields with matching names between different structures\"",
+        "explanation": "CORRESPONDING #( ... ) copies components between structures or tables based on matching component names.",
+        "difficulty": "easy",
+        "topic": "Constructor Operators"
+      }
+    ]
+  },
+  {
+    "id": "quiz-fnd-3",
+    "lesson_id": "les-fnd-04",
+    "module_id": "mod-fnd-4",
+    "title": "Internal Tables & Table Expressions",
+    "description": "Assess your mastery of internal table categories, search complexities, secondary keys, and table expressions.",
+    "mode": "assessment",
+    "passing_score": 80,
+    "questions": [
+      {
+        "id": "q-fnd-301",
+        "quiz_id": "quiz-fnd-3",
+        "question_type": "multiple_choice",
+        "question": "Which internal table category supports O(1) constant-time key lookups regardless of row count?",
+        "options_json": "[\"Standard Table\",\"Sorted Table\",\"Hashed Table\",\"Binary Table\"]",
+        "correct_answer_json": "\"Hashed Table\"",
+        "explanation": "Hashed tables compute a memory address via hashing algorithms, providing O(1) lookup times across millions of records.",
+        "difficulty": "easy",
+        "topic": "Internal Tables"
+      },
+      {
+        "id": "q-fnd-302",
+        "quiz_id": "quiz-fnd-3",
+        "question_type": "output_prediction",
+        "question": "What happens if a table expression lt_data[ id = 999 ] does not find a match?",
+        "options_json": "[\"Returns initial value 0\",\"Sets sy-subrc to 4 and continues\",\"Throws uncaught exception CX_SY_ITAB_LINE_NOT_FOUND\",\"Returns a null reference\"]",
+        "correct_answer_json": "\"Throws uncaught exception CX_SY_ITAB_LINE_NOT_FOUND\"",
+        "explanation": "Table expressions raise CX_SY_ITAB_LINE_NOT_FOUND if the row is absent. Use VALUE #( lt_data[ id = 999 ] OPTIONAL ) to avoid runtime dumps.",
+        "difficulty": "medium",
+        "topic": "Table Expressions"
+      },
+      {
+        "id": "q-fnd-303",
+        "quiz_id": "quiz-fnd-3",
+        "question_type": "multiple_choice",
+        "question": "Which system field contains the current table index during a LOOP AT ... INTO iteration?",
+        "options_json": "[\"sy-index\",\"sy-tabix\",\"sy-subrc\",\"sy-dbcnt\"]",
+        "correct_answer_json": "\"sy-tabix\"",
+        "explanation": "sy-tabix tracks the table index in loops. sy-index tracks DO and WHILE loop iterations.",
+        "difficulty": "easy",
+        "topic": "System Fields"
+      },
+      {
+        "id": "q-fnd-304",
+        "quiz_id": "quiz-fnd-3",
+        "question_type": "multiple_select",
+        "question": "Which statements are true regarding SORTED internal tables?",
+        "options_json": "[\"Rows are always maintained in ascending or descending sorted order by their key\",\"APPEND statement will dump if the appended row violates the sort order\",\"INSERT statement automatically places the entry into its correct sorted position\",\"They cannot have duplicate key entries under any circumstances\"]",
+        "correct_answer_json": "[\"Rows are always maintained in ascending or descending sorted order by their key\",\"APPEND statement will dump if the appended row violates the sort order\",\"INSERT statement automatically places the entry into its correct sorted position\"]",
+        "explanation": "Sorted tables CAN have duplicate keys if declared WITH NON-UNIQUE KEY. INSERT places the row in sorted order; APPEND dumps if out of sequence.",
+        "difficulty": "hard",
+        "topic": "Sorted Tables"
+      },
+      {
+        "id": "q-fnd-305",
+        "quiz_id": "quiz-fnd-3",
+        "question_type": "scenario_based",
+        "question": "A batch program loops through 500,000 records, executing READ TABLE on an auxiliary standard table inside the loop. The job runs for 4 hours. How should this be optimized?",
+        "options_json": "[\"Convert the auxiliary table into a HASHED TABLE with unique key, reducing lookup from O(N) to O(1)\",\"Change the DO loop to WHILE\",\"Run the program only at night\",\"Use WRITE statements inside the loop\"]",
+        "correct_answer_json": "\"Convert the auxiliary table into a HASHED TABLE with unique key, reducing lookup from O(N) to O(1)\"",
+        "explanation": "A nested O(N) lookup on a standard table produces O(N^2) quadratic complexity. Converting to a Hashed table transforms performance to linear O(N).",
+        "difficulty": "medium",
+        "topic": "Performance"
+      }
+    ]
+  },
+  {
+    "id": "quiz-oop-1",
+    "lesson_id": "les-oop-01",
+    "module_id": "mod-oop-1",
+    "title": "Object-Oriented ABAP, Classes & Interfaces",
+    "description": "Examine your grasp of classes, constructors, instance vs static members, interfaces, and polymorphism.",
+    "mode": "assessment",
+    "passing_score": 80,
+    "questions": [
+      {
+        "id": "q-oop-101",
+        "quiz_id": "quiz-oop-1",
+        "question_type": "multiple_choice",
+        "question": "Which method signature allows a method to be evaluated directly within expressions?",
+        "options_json": "[\"EXPORTING parameter only\",\"RETURNING VALUE(r) parameter with optional IMPORTING parameters\",\"CHANGING parameter only\",\"EXCEPTIONS declaration\"]",
+        "correct_answer_json": "\"RETURNING VALUE(r) parameter with optional IMPORTING parameters\"",
+        "explanation": "Functional methods have a RETURNING VALUE parameter, allowing them to be invoked inline on the right-hand side of assignments.",
+        "difficulty": "easy",
+        "topic": "OOP ABAP"
+      },
+      {
+        "id": "q-oop-102",
+        "quiz_id": "quiz-oop-1",
+        "question_type": "multiple_choice",
+        "question": "When is the static constructor CLASS_CONSTRUCTOR executed for an ABAP class?",
+        "options_json": "[\"Every time CREATE OBJECT or NEW is invoked\",\"Exactly once when the class is first accessed in the user session\",\"When the user logs off\",\"Whenever an interface method is called\"]",
+        "correct_answer_json": "\"Exactly once when the class is first accessed in the user session\"",
+        "explanation": "CLASS_CONSTRUCTOR executes exactly once before any component of the class is accessed for the first time.",
+        "difficulty": "medium",
+        "topic": "Constructors"
+      },
+      {
+        "id": "q-oop-103",
+        "quiz_id": "quiz-oop-1",
+        "question_type": "multiple_choice",
+        "question": "How do you call an interface method if_logger~log from outside an instance lo_app?",
+        "options_json": "[\"lo_app->if_logger.log( )\",\"lo_app->if_logger~log( )\",\"lo_app::if_logger->log( )\",\"CALL if_logger OF lo_app\"]",
+        "correct_answer_json": "\"lo_app->if_logger~log( )\"",
+        "explanation": "The tilde (~) operator references components belonging to an interface on the object instance.",
+        "difficulty": "easy",
+        "topic": "Interfaces"
+      },
+      {
+        "id": "q-oop-104",
+        "quiz_id": "quiz-oop-1",
+        "question_type": "output_prediction",
+        "question": "What runtime error occurs if a widening cast (down-cast) lo_child ?= lo_parent fails because the object is not an instance of the child class?",
+        "options_json": "[\"CX_SY_REF_IS_INITIAL\",\"CX_SY_MOVE_CAST_ERROR\",\"CX_SY_ZERODIVIDE\",\"CX_SY_ITAB_DUPLICATE_KEY\"]",
+        "correct_answer_json": "\"CX_SY_MOVE_CAST_ERROR\"",
+        "explanation": "Failing ?= casting raises CX_SY_MOVE_CAST_ERROR, which can be intercepted using TRY ... CATCH.",
+        "difficulty": "medium",
+        "topic": "Casting & Polymorphism"
+      },
+      {
+        "id": "q-oop-105",
+        "quiz_id": "quiz-oop-1",
+        "question_type": "true_false",
+        "question": "A subclass can directly access and modify the PRIVATE attributes of its superclass.",
+        "options_json": "[\"True\",\"False\"]",
+        "correct_answer_json": "\"False\"",
+        "explanation": "Private attributes are strictly accessible only within the declaring class. Subclasses must use PROTECTED or PUBLIC members.",
+        "difficulty": "easy",
+        "topic": "Visibility"
+      }
+    ]
+  },
+  {
+    "id": "quiz-data-1",
+    "lesson_id": "les-data-01",
+    "module_id": "mod-data-1",
+    "title": "Open SQL, Modern Expressions & CDS View Entities",
+    "description": "Verify your proficiency in modern Open SQL syntax, CDS view entities, associations, and constructor operators.",
+    "mode": "assessment",
+    "passing_score": 80,
+    "questions": [
+      {
+        "id": "q-data-101",
+        "quiz_id": "quiz-data-1",
+        "question_type": "code_completion",
+        "question": "In modern ABAP Open SQL, complete the clause to escape the host variable lv_carrier:\\n\\nSELECT FROM /dmo/flight FIELDS connection_id WHERE carrier_id = _____",
+        "options_json": "[\":lv_carrier\",\"@lv_carrier\",\"$lv_carrier\",\"#lv_carrier\"]",
+        "correct_answer_json": "\"@lv_carrier\"",
+        "explanation": "The @ character escapes host variables in ABAP SQL statements, distinguishing them from database table columns.",
+        "difficulty": "easy",
+        "topic": "Open SQL"
+      },
+      {
+        "id": "q-data-102",
+        "quiz_id": "quiz-data-1",
+        "question_type": "multiple_choice",
+        "question": "What is the primary operational advantage of a CDS Association over a standard SQL JOIN?",
+        "options_json": "[\"Associations encrypt database data in transit\",\"Associations are on-demand: they only generate an SQL join when consumer queries select fields from the target entity\",\"Associations work only on flat files\",\"Associations cannot be used with CDS views\"]",
+        "correct_answer_json": "\"Associations are on-demand: they only generate an SQL join when consumer queries select fields from the target entity\"",
+        "explanation": "Associations represent lazy-load relationships, preventing unnecessary database joins when target attributes are not requested.",
+        "difficulty": "medium",
+        "topic": "CDS Associations"
+      },
+      {
+        "id": "q-data-103",
+        "quiz_id": "quiz-data-1",
+        "question_type": "multiple_choice",
+        "question": "Which constructor operator collapses an internal table into a single aggregated scalar value?",
+        "options_json": "[\"FILTER\",\"REDUCE\",\"CORRESPONDING\",\"EXACT\"]",
+        "correct_answer_json": "\"REDUCE\"",
+        "explanation": "REDUCE folds table rows into a cumulative result (like sum or concatenated text) without procedural loops.",
+        "difficulty": "medium",
+        "topic": "Constructor Operators"
+      },
+      {
+        "id": "q-data-104",
+        "quiz_id": "quiz-data-1",
+        "question_type": "find_error",
+        "question": "Identify the flaw in this modern SQL statement:\\n\\nSELECT carrier_id, connection_id FROM /dmo/flight INTO TABLE @lt_flights WHERE carrier_id = @lv_carrier.",
+        "options_json": "[\"The fields must be comma-separated, but in modern ABAP SQL without FIELDS clause or comma list, syntax rules require commas and @ escaping throughout\",\"Table /dmo/flight cannot be queried\",\"WHERE clause cannot use @\",\"INTO TABLE must be at the end of the statement in modern ABAP SQL syntax\"]",
+        "correct_answer_json": "\"INTO TABLE must be at the end of the statement in modern ABAP SQL syntax\"",
+        "explanation": "In strict modern ABAP SQL, the INTO clause must appear at the end of the SELECT statement (or after WHERE/GROUP BY).",
+        "difficulty": "hard",
+        "topic": "Open SQL Strict Syntax"
+      },
+      {
+        "id": "q-data-105",
+        "quiz_id": "quiz-data-1",
+        "question_type": "true_false",
+        "question": "CDS View Entities require an @AbapCatalog.sqlViewName annotation that generates an SQL View in DDIC (SE11).",
+        "options_json": "[\"True\",\"False\"]",
+        "correct_answer_json": "\"False\"",
+        "explanation": "CDS View Entities (define view entity) do NOT generate an SQL View in DDIC. Classic CDS views (define view) did.",
+        "difficulty": "medium",
+        "topic": "CDS View Entities"
+      }
+    ]
+  },
+  {
+    "id": "quiz-rap-1",
+    "lesson_id": "les-rap-01",
+    "module_id": "mod-rap-1",
+    "title": "SAP RAP, Behavior Definitions & EML",
+    "description": "Test your understanding of RAP architecture, Behavior Definitions (BDEF), validations, determinations, actions, and EML.",
+    "mode": "assessment",
+    "passing_score": 80,
+    "questions": [
+      {
+        "id": "q-rap-101",
+        "quiz_id": "quiz-rap-1",
+        "question_type": "multiple_choice",
+        "question": "What is the role of a Behavior Definition (BDEF) in the ABAP RESTful Application Programming Model (RAP)?",
+        "options_json": "[\"It designs UI screens in SAP GUI\",\"It specifies transactional capabilities (CRUD, actions, validations, determinations) for a CDS data model\",\"It defines database table indexes\",\"It replaces transport requests\"]",
+        "correct_answer_json": "\"It specifies transactional capabilities (CRUD, actions, validations, determinations) for a CDS data model\"",
+        "explanation": "BDEF defines the transactional contract for business objects: which operations are managed, validations to execute, and actions available.",
+        "difficulty": "easy",
+        "topic": "RAP Architecture"
+      },
+      {
+        "id": "q-rap-102",
+        "quiz_id": "quiz-rap-1",
+        "question_type": "multiple_choice",
+        "question": "Which EML statement executes modifications on RAP business objects?",
+        "options_json": "[\"MODIFY ENTITIES\",\"UPDATE RAP\",\"EXECUTE ENTITY\",\"CHANGE OBJECTS\"]",
+        "correct_answer_json": "\"MODIFY ENTITIES\"",
+        "explanation": "EML uses MODIFY ENTITIES to create, update, delete, or invoke actions on RAP business objects.",
+        "difficulty": "easy",
+        "topic": "EML Syntax"
+      },
+      {
+        "id": "q-rap-103",
+        "quiz_id": "quiz-rap-1",
+        "question_type": "multiple_choice",
+        "question": "What is the key functional difference between a RAP Validation and a RAP Determination?",
+        "options_json": "[\"Determinations are for UI styling; Validations are for database tables\",\"Validations are read-only checks that veto invalid saves; Determinations compute and modify entity values automatically\",\"Validations run only in test environments\",\"Determinations cannot modify draft entities\"]",
+        "correct_answer_json": "\"Validations are read-only checks that veto invalid saves; Determinations compute and modify entity values automatically\"",
+        "explanation": "Validations evaluate business rules on save and return messages without altering state. Determinations derive and assign field values.",
+        "difficulty": "medium",
+        "topic": "RAP Logic"
+      },
+      {
+        "id": "q-rap-104",
+        "quiz_id": "quiz-rap-1",
+        "question_type": "scenario_based",
+        "question": "A developer defines an action \"acceptBooking\" in BDEF. How is this action triggered from an ABAP test program?",
+        "options_json": "[\"CALL TRANSACTION 'ACCEPT'\",\"MODIFY ENTITIES OF zi_travel_m ENTITY Booking EXECUTE acceptBooking FROM VALUE #( ... )\",\"EXECUTE SQL \\\"UPDATE booking SET status = 'A'\\\"\",\"SUBMIT r_accept_booking\"]",
+        "correct_answer_json": "\"MODIFY ENTITIES OF zi_travel_m ENTITY Booking EXECUTE acceptBooking FROM VALUE #( ... )\"",
+        "explanation": "EML provides the EXECUTE clause on MODIFY ENTITIES to trigger custom business actions.",
+        "difficulty": "medium",
+        "topic": "EML Actions"
+      },
+      {
+        "id": "q-rap-105",
+        "quiz_id": "quiz-rap-1",
+        "question_type": "multiple_select",
+        "question": "Which steps are mandatory to expose a RAP entity to a Fiori Elements UI application?",
+        "options_json": "[\"Create a Service Definition exposing the root and child entities\",\"Create a Service Binding with binding type OData V4 - UI\",\"Publish the Service Binding in ADT\",\"Write a custom dynpro screen in SE51\"]",
+        "correct_answer_json": "[\"Create a Service Definition exposing the root and child entities\",\"Create a Service Binding with binding type OData V4 - UI\",\"Publish the Service Binding in ADT\"]",
+        "explanation": "Fiori Elements connects via OData V4 UI service bindings generated from service definitions, eliminating dynpro screens entirely.",
+        "difficulty": "hard",
+        "topic": "Service Exposure"
+      }
+    ]
+  },
+  {
+    "id": "quiz-adv-1",
+    "lesson_id": "les-adv-01",
+    "module_id": "mod-adv-1",
+    "title": "ABAP Unit Testing, Security & Performance Profiling",
+    "description": "Assess advanced testing practices, test doubles, SQL tracing (ST05), Clean ABAP, and authorization enforcement.",
+    "mode": "assessment",
+    "passing_score": 80,
+    "questions": [
+      {
+        "id": "q-adv-101",
+        "quiz_id": "quiz-adv-1",
+        "question_type": "multiple_choice",
+        "question": "Which class provides assertion methods (assert_equals, assert_initial, assert_true) in ABAP Unit tests?",
+        "options_json": "[\"cl_abap_unit_assert\",\"cl_test_checker\",\"cl_assert_verify\",\"cx_unit_exception\"]",
+        "correct_answer_json": "\"cl_abap_unit_assert\"",
+        "explanation": "cl_abap_unit_assert contains standard assertion methods that signal unit test passes or failures.",
+        "difficulty": "easy",
+        "topic": "Unit Testing"
+      },
+      {
+        "id": "q-adv-102",
+        "quiz_id": "quiz-adv-1",
+        "question_type": "multiple_choice",
+        "question": "Which transaction is the primary tool for tracing and analyzing database SQL execution times and roundtrips?",
+        "options_json": "[\"ST05\",\"SE38\",\"SM50\",\"AL08\"]",
+        "correct_answer_json": "\"ST05\"",
+        "explanation": "ST05 (Performance Analysis) traces SQL statements, duration in microseconds, and database index choices.",
+        "difficulty": "easy",
+        "topic": "Performance"
+      },
+      {
+        "id": "q-adv-103",
+        "quiz_id": "quiz-adv-1",
+        "question_type": "scenario_based",
+        "question": "An ABAP Unit test class executes database updates against real tables in the development system. Why is this a violation of unit testing principles?",
+        "options_json": "[\"Unit tests must execute without side effects and be completely decoupled from database state using test doubles or mocks\",\"Database updates are too fast for unit tests\",\"SAP HANA does not support unit tests\",\"Unit tests only test user interfaces\"]",
+        "correct_answer_json": "\"Unit tests must execute without side effects and be completely decoupled from database state using test doubles or mocks\"",
+        "explanation": "Unit tests must be repeatable, harmless, fast, and isolated. Direct database changes cause flaky tests and dirty system state.",
+        "difficulty": "medium",
+        "topic": "Unit Testing Isolation"
+      },
+      {
+        "id": "q-adv-104",
+        "quiz_id": "quiz-adv-1",
+        "question_type": "multiple_choice",
+        "question": "How is row-level data access authorization enforced in CDS View Entities?",
+        "options_json": "[\"AUTHORITY-CHECK OBJECT inside Open SQL queries\",\"DCL (Data Control Language) roles defined via DEFINE ROLE\",\"Hardcoded user checks in class constructors\",\"Client-side JavaScript tokens\"]",
+        "correct_answer_json": "\"DCL (Data Control Language) roles defined via DEFINE ROLE\"",
+        "explanation": "DCL access controls filter CDS entities automatically at the database level according to user authorizations.",
+        "difficulty": "medium",
+        "topic": "Security & Authorizations"
+      },
+      {
+        "id": "q-adv-105",
+        "quiz_id": "quiz-adv-1",
+        "question_type": "true_false",
+        "question": "According to Clean ABAP guidelines, you should prefer returning multiple EXPORTING parameters over returning an object, structure, or functional method with RETURNING.",
+        "options_json": "[\"True\",\"False\"]",
+        "correct_answer_json": "\"False\"",
+        "explanation": "Clean ABAP strongly advocates functional methods with a single RETURNING parameter or clean composite structures over multiple EXPORTING parameters.",
+        "difficulty": "easy",
+        "topic": "Clean ABAP"
       }
     ]
   }
@@ -1104,400 +1229,244 @@ export const SEED_QUIZZES = [
 
 export const SEED_FLASHCARDS = [
   {
-    id: 'fc-01',
-    category: 'System Fields',
-    front: 'What does SY-SUBRC = 4 mean in ABAP?',
-    back: 'It indicates that the statement failed or that the requested record/condition was not found.',
-    code_snippet: `READ TABLE lt_tab WITH KEY id = 999 INTO DATA(ls_row).
-IF sy-subrc = 4.
-  " Row not found!
-ENDIF.`,
-    explanation: '0 indicates success, 4 indicates entry not found or authority check failed, 8 indicates general system error.',
-    mnemonic: '4 = "Four" -> "Forfeit" (record not found)',
-    difficulty: 'easy'
+    "id": "fc-01",
+    "category": "System Fields",
+    "front": "What does SY-SUBRC = 4 signify after a database or table operation?",
+    "back": "SY-SUBRC = 4 indicates that the searched entry or condition was NOT found, or that an authorization check failed.",
+    "code_snippet": "READ TABLE lt_items INTO ls_item WITH KEY id = lv_id.\nIF sy-subrc = 0.\n  \" Entry found\nELSEIF sy-subrc = 4.\n  \" Entry not found\nENDIF.",
+    "explanation": "0 indicates success, 4 indicates not found / failed condition, 8 or higher indicates critical syntax or runtime failure.",
+    "mnemonic": "SUBRC: Subroutine Return Code (0 = OK, 4 = Not Found)",
+    "difficulty": "easy"
   },
   {
-    id: 'fc-02',
-    category: 'Syntax',
-    front: 'What is the purpose of the @ symbol in modern ABAP SQL statements?',
-    back: 'The @ character escapes ABAP host variables, distinguishing them from database column names in strict SQL mode.',
-    code_snippet: `SELECT * FROM sflight
-  WHERE carrid = @lv_carrid
-  INTO TABLE @DATA(lt_flights).`,
-    explanation: 'Starting with ABAP 7.40 SP05, @ is mandatory for host variables when modern SQL features (commas, inline declarations) are used.',
-    mnemonic: '@ indicates "At application variable"',
-    difficulty: 'easy'
+    "id": "fc-02",
+    "category": "Syntax & Escaping",
+    "front": "Why must host variables in modern Open SQL statements be prefixed with @?",
+    "back": "The @ symbol distinguishes ABAP host program variables from database column identifiers, avoiding naming conflicts.",
+    "code_snippet": "SELECT FROM /dmo/flight\n  FIELDS carrier_id, connection_id\n  WHERE carrier_id = @lv_carrier\n  INTO TABLE @DATA(lt_flights).",
+    "explanation": "Introduced in ABAP 7.40 SP05, @ tells the SQL compiler that the variable resides in ABAP application server memory.",
+    "mnemonic": "@ indicates \"At my ABAP application variable\"",
+    "difficulty": "easy"
   },
   {
-    id: 'fc-03',
-    category: 'Internal Tables',
-    front: 'Compare the time complexity of reading a row by key in Standard vs Sorted vs Hashed tables.',
-    back: 'Standard: O(N) linear search\nSorted: O(log N) binary search\nHashed: O(1) constant hash lookup',
-    code_snippet: `DATA lt_std  TYPE STANDARD TABLE OF ...
-DATA lt_sort TYPE SORTED TABLE OF ... WITH UNIQUE KEY id
-DATA lt_hash TYPE HASHED TABLE OF ... WITH UNIQUE KEY id`,
-    explanation: 'Always choose Hashed tables for large read-heavy datasets queried by a unique key.',
-    mnemonic: 'S-S-H: Scan (N) -> Split (log N) -> Hash (1)',
-    difficulty: 'medium'
+    "id": "fc-03",
+    "category": "Internal Tables",
+    "front": "Compare the lookup performance of Standard vs Sorted vs Hashed tables by primary key.",
+    "back": "Standard: O(N) linear search. Sorted: O(log N) binary search. Hashed: O(1) constant time hash algorithm.",
+    "code_snippet": "DATA lt_std  TYPE STANDARD TABLE OF ty_row WITH NON-UNIQUE KEY id.\nDATA lt_sort TYPE SORTED TABLE OF ty_row WITH UNIQUE KEY id.\nDATA lt_hash TYPE HASHED TABLE OF ty_row WITH UNIQUE KEY id.",
+    "explanation": "Hashed tables provide O(1) single-record read performance regardless of whether the table contains 10 rows or 1,000,000 rows.",
+    "mnemonic": "SSH: Standard (Slow/Sequential), Sorted (Splitting binary), Hashed (Hot O(1) direct)",
+    "difficulty": "medium"
   },
   {
-    id: 'fc-04',
-    category: 'OOP Terminology',
-    front: 'What is the difference between PROTECTED and PRIVATE visibility sections?',
-    back: 'PRIVATE components can only be accessed within the defining class itself. PROTECTED components are additionally accessible by subclasses (inheritance).',
-    code_snippet: `CLASS lcl_parent DEFINITION.
-  PROTECTED SECTION.
-    DATA mv_family_secret TYPE string.
-  PRIVATE SECTION.
-    DATA mv_personal_key  TYPE string.
-ENDCLASS.`,
-    explanation: 'Information hiding principles recommend keeping data PRIVATE unless subclasses specifically need direct access.',
-    mnemonic: 'Protect the family (subclasses); Private is strictly me',
-    difficulty: 'medium'
+    "id": "fc-04",
+    "category": "OOP Principles",
+    "front": "What is the difference between PROTECTED and PRIVATE visibility sections in an ABAP class?",
+    "back": "PRIVATE components are only visible within the declaring class itself. PROTECTED components are visible in the class and all its subclasses.",
+    "code_snippet": "CLASS lcl_parent DEFINITION.\n  PROTECTED SECTION.\n    DATA mv_shared TYPE string.\n  PRIVATE SECTION.\n    DATA mv_secret TYPE string.\nENDCLASS.",
+    "explanation": "Subclasses inherit protected attributes and can override protected methods, but have zero access to private components.",
+    "mnemonic": "PRIVATE = Self only. PROTECTED = Family (subclasses) included.",
+    "difficulty": "easy"
   },
   {
-    id: 'fc-05',
-    category: 'CDS & RAP',
-    front: 'What is EML and when is it used?',
-    back: 'Entity Manipulation Language (EML) is the ABAP syntax extension used to consume RAP Business Objects (MODIFY ENTITIES, READ ENTITIES).',
-    code_snippet: `MODIFY ENTITIES OF zi_travel
-  ENTITY Travel
-  UPDATE FIELDS ( BookingFee )
-  WITH VALUE #( ( %key-TravelId = '001' BookingFee = '50' ) ).`,
-    explanation: 'EML provides a type-safe transactional bridge into RAP without needing OData network calls.',
-    mnemonic: 'EML = Entity Manipulation Language',
-    difficulty: 'hard'
+    "id": "fc-05",
+    "category": "CDS & RAP",
+    "front": "What is Entity Manipulation Language (EML) and when is it utilized?",
+    "back": "EML is an ABAP language extension for executing transactional CRUD operations (READ, MODIFY, COMMIT) on RAP Business Objects.",
+    "code_snippet": "MODIFY ENTITIES OF zi_travel_m\n  ENTITY Travel\n  UPDATE FIELDS ( BookingFee )\n  WITH VALUE #( ( %tky = ls_key BookingFee = 50 ) )\n  FAILED DATA(lt_failed)\n  REPORTED DATA(lt_reported).",
+    "explanation": "EML decouples consumers from internal database tables, directing calls through the RAP transactional runtime buffer.",
+    "mnemonic": "EML = Entity Manipulation Language for RAP",
+    "difficulty": "medium"
   },
   {
-    id: 'fc-06',
-    category: 'Interview Prep',
-    front: 'What is the difference between a CDS View Entity and a classic CDS DDIC-based View?',
-    back: 'CDS View Entities (define view entity) do not generate an underlying SQL view in the ABAP Dictionary (SE11). They have cleaner lifecycle handling, faster activation, and do not suffer from client handling limitations.',
-    code_snippet: `@AccessControl.authorizationCheck: #NOT_REQUIRED
-define view entity ZI_CustomerEntity as select from zcustomer {
-  key customer_id,
-      company_name
-}`,
-    explanation: 'SAP recommends view entities exclusively for all new development starting in ABAP 7.55 / S/4HANA 2020.',
-    mnemonic: 'View Entity = No SE11 SQL View Overhead',
-    difficulty: 'hard'
-  }
-];
-
-export const SEED_SPRINT_DAYS = [
-  {
-    day_number: 1,
-    title: 'Day 1 — ABAP Fundamentals Sprint',
-    subtitle: 'Runtime, Data Types, Control Logic & Internal Tables',
-    focus_area: 'Core Syntax & Memory Basics',
-    objectives_json: JSON.stringify([
-      'Understand ABAP execution architecture and data typing (I, P, STRING, C, D).',
-      'Use modern string templates |...{ var }...| and inline declarations DATA(...).',
-      'Master conditional branching and iteration loops (IF, CASE, DO, WHILE).',
-      'Understand Standard vs Sorted vs Hashed internal tables and evaluate SY-SUBRC.'
-    ]),
-    theory_md: `### Day 1 Intensive Theory
-
-Welcome to Day 1 of the 5-Day ABAP Sprint. Today establishes the foundational mechanics of the ABAP language:
-1. **The Architecture**: ABAP programs run within the application server's dialog work processes.
-2. **Elementary Data Objects**: Variables are defined with \`DATA\` or inline via \`DATA(var) = ...\`.
-3. **Internal Tables**: Unlike arrays in C or Java with fixed boundaries, ABAP internal tables dynamically expand.
-4. **Return Codes**: Always check \`sy-subrc = 0\` after table lookups to ensure safe code.`,
-    code_examples_json: JSON.stringify([
-      {
-        title: 'Basic Program Logic & Table Operations',
-        code: `DATA(lv_greeting) = 'Welcome to Day 1 Sprint'.
-DATA lt_scores TYPE STANDARD TABLE OF i WITH EMPTY KEY.
-
-APPEND 85 TO lt_scores.
-APPEND 92 TO lt_scores.
-APPEND 78 TO lt_scores.
-
-SORT lt_scores.
-
-LOOP AT lt_scores INTO DATA(lv_score).
-  WRITE: / |Score: { lv_score }|.
-ENDLOOP.`,
-        output: 'Score: 78\nScore: 85\nScore: 92'
-      }
-    ]),
-    practice_tasks_json: JSON.stringify([
-      { id: 'task-1-1', title: 'Grade Calculator', description: 'Write an ABAP snippet that takes a variable score and outputs Grade A (>=90), B (>=80), C (>=70), or Fail (<70).' },
-      { id: 'task-1-2', title: 'Sum of First 10 Numbers', description: 'Use a DO 10 TIMES loop with sy-index to sum numbers 1 through 10.' },
-      { id: 'task-1-3', title: 'Internal Table Min/Max', description: 'Populate a table of 5 integers, sort it, and output the lowest and highest values.' }
-    ]),
-    quiz_questions_json: JSON.stringify([
-      {
-        question: 'What is the default initial value of an integer (TYPE i) in ABAP?',
-        options: ['null', '0', '-1', 'undefined'],
-        correctAnswer: '0',
-        explanation: 'ABAP initializes numeric types to 0 automatically.'
-      },
-      {
-        question: 'Which statement correctly inserts a line into a sorted internal table?',
-        options: [
-          'INSERT ... INTO TABLE ...',
-          'PUSH ... TO ...',
-          'ENQUEUE ... INTO ...',
-          'ADD ... TO ...'
-        ],
-        correctAnswer: 'INSERT ... INTO TABLE ...',
-        explanation: 'INSERT INTO TABLE automatically inserts the entry at the correct position preserving sorted order.'
-      }
-    ]),
-    revision_points_json: JSON.stringify([
-      'sy-subrc = 0 indicates success; 4 indicates row/record not found.',
-      'Always include whitespace inside string template brackets: |{ var }|.',
-      'Hashed tables cannot be accessed via index; only by unique key.'
-    ]),
-    completion_criteria_json: JSON.stringify([
-      'Reviewed elementary data types and string templates.',
-      'Implemented conditional grade evaluator exercise.',
-      'Achieved >= 80% on Day 1 mini quiz.'
-    ])
+    "id": "fc-06",
+    "category": "CDS Architecture",
+    "front": "What is the architectural difference between a CDS View Entity and a classic DDIC-based CDS View?",
+    "back": "CDS View Entities compile without generating an SQL View artifact in DDIC (SE11), offering faster activation, strict typing, and zero SQL-view name limitations.",
+    "code_snippet": "@AccessControl.authorizationCheck: #NOT_REQUIRED\ndefine view entity ZI_Customer as select from /dmo/customer {\n  key customer_id,\n      first_name,\n      last_name\n}",
+    "explanation": "Classic views required @AbapCatalog.sqlViewName which created an extra DDIC database view. View Entities eliminate this overhead.",
+    "mnemonic": "View Entity = Pure HANA CDS (No DDIC SQL View shadow)",
+    "difficulty": "medium"
   },
   {
-    day_number: 2,
-    title: 'Day 2 — Object-Oriented ABAP',
-    subtitle: 'Classes, Objects, Encapsulation & Inheritance',
-    focus_area: 'Object-Oriented Programming Patterns',
-    objectives_json: JSON.stringify([
-      'Define local classes with DEFINITION and IMPLEMENTATION sections.',
-      'Apply PUBLIC, PROTECTED, and PRIVATE visibility sections.',
-      'Use constructors and instantiate objects with the NEW operator.',
-      'Implement inheritance, method redefinitions, and interface contracts.'
-    ]),
-    theory_md: `### Day 2 Intensive Theory
-
-Today shifts paradigms from procedural routines to Object-Oriented ABAP (ABAP Objects):
-- **Classes**: Blueprint defining attributes (state) and methods (behavior).
-- **Constructors**: Instance constructor method \`constructor\` is invoked upon instantiation.
-- **Encapsulation**: Guard internal state in \`PRIVATE SECTION\` and expose accessors.
-- **Interfaces**: Provide polymorphic contracts (\`INTERFACES if_contract\`).`,
-    code_examples_json: JSON.stringify([
-      {
-        title: 'Local Class with Public Interface',
-        code: `CLASS lcl_vehicle DEFINITION.
-  PUBLIC SECTION.
-    METHODS constructor IMPORTING iv_model TYPE string.
-    METHODS get_model RETURNING VALUE(rv_model) TYPE string.
-  PRIVATE SECTION.
-    DATA mv_model TYPE string.
-ENDCLASS.
-
-CLASS lcl_vehicle IMPLEMENTATION.
-  METHOD constructor.
-    mv_model = iv_model.
-  ENDMETHOD.
-  METHOD get_model.
-    rv_model = mv_model.
-  ENDMETHOD.
-ENDCLASS.
-
-DATA(lo_car) = NEW lcl_vehicle( 'Electric Sedan' ).
-WRITE: / |Model: { lo_car->get_model() }|.`,
-        output: 'Model: Electric Sedan'
-      }
-    ]),
-    practice_tasks_json: JSON.stringify([
-      { id: 'task-2-1', title: 'Employee Manager Class', description: 'Create a class lcl_employee with salary and calculate bonus method.' },
-      { id: 'task-2-2', title: 'Inheritance Hierarchy', description: 'Create lcl_manager inheriting from lcl_employee and redefine bonus computation.' }
-    ]),
-    quiz_questions_json: JSON.stringify([
-      {
-        question: 'Which visibility section allows attributes to be accessed only within the defining class and its subclasses?',
-        options: ['PUBLIC SECTION', 'PROTECTED SECTION', 'PRIVATE SECTION', 'PACKAGE SECTION'],
-        correctAnswer: 'PROTECTED SECTION',
-        explanation: 'PROTECTED components are accessible to the class and any classes that inherit from it.'
-      }
-    ]),
-    revision_points_json: JSON.stringify([
-      'Constructors in ABAP are always named constructor and can have only IMPORTING and EXCEPTION parameters.',
-      'Static methods are declared with CLASS-METHODS and called with =>.'
-    ]),
-    completion_criteria_json: JSON.stringify([
-      'Implemented local class with private state and public accessors.',
-      'Completed Day 2 OOP assessment.'
-    ])
+    "id": "fc-07",
+    "category": "System Fields",
+    "front": "What is the purpose of SY-TABIX in ABAP?",
+    "back": "SY-TABIX contains the 1-based index of the current table row during LOOP AT iterations, or after a successful READ TABLE.",
+    "code_snippet": "LOOP AT lt_orders INTO ls_order.\n  WRITE: / |Processing row { sy-tabix } of { lines( lt_orders ) }|.\nENDLOOP.",
+    "explanation": "In hashed tables without index, sy-tabix is 0. In sorted or standard tables, it reflects the ordinal position.",
+    "mnemonic": "TABIX = TABle IndeX",
+    "difficulty": "easy"
   },
   {
-    day_number: 3,
-    title: 'Day 3 — Data Access & Modern Expressions',
-    subtitle: 'Modern Open SQL, VALUE #, COND # & CDS Views',
-    focus_area: 'Database & In-Memory Expressions',
-    objectives_json: JSON.stringify([
-      'Write strict modern Open SQL queries with comma-separated field lists.',
-      'Escape host variables with @ and use inline target declarations @DATA(lt_tab).',
-      'Apply constructor operators VALUE #, CORRESPONDING #, and COND #.',
-      'Understand Core Data Services (CDS) view entities and associations.'
-    ]),
-    theory_md: `### Day 3 Intensive Theory
-
-Modern ABAP is characterized by rich expressions and code-to-data pushdown:
-- **Strict SQL**: Field lists with commas, mandatory \`@\` on host variables.
-- **Constructor Operators**: \`VALUE #( ... )\` constructs complex structures and tables in one line.
-- **CDS View Entities**: Defined in ADT DDL files, shifting business logic directly into the SAP HANA database layer.`,
-    code_examples_json: JSON.stringify([
-      {
-        title: 'Modern ABAP SQL & Constructor Operators',
-        code: `DATA(lv_carrier) = 'AA'.
-
-* Modern SELECT into inline internal table
-SELECT carrid, connid, cityfrom, cityto
-  FROM spfli
-  WHERE carrid = @lv_carrier
-  INTO TABLE @DATA(lt_flights).
-
-DATA(lt_cities) = VALUE string_table(
-  ( 'New York' )
-  ( 'Frankfurt' )
-  ( 'Tokyo' )
-).`,
-        output: 'Modern SQL syntax verified'
-      }
-    ]),
-    practice_tasks_json: JSON.stringify([
-      { id: 'task-3-1', title: 'Inline Table Constructor', description: 'Build an internal table of 3 product structures using VALUE # in a single statement.' },
-      { id: 'task-3-2', title: 'CDS View Entity Design', description: 'Draft the DDL definition for a flight connections view entity with association.' }
-    ]),
-    quiz_questions_json: JSON.stringify([
-      {
-        question: 'Which constructor expression is used to copy identically named components between two structures or tables?',
-        options: ['VALUE #', 'CORRESPONDING #', 'EXACT #', 'CONV #'],
-        correctAnswer: 'CORRESPONDING #',
-        explanation: 'CORRESPONDING #( ... ) maps matching components between source and target structures or tables.'
-      }
-    ]),
-    revision_points_json: JSON.stringify([
-      'CDS View Entities do not generate classic SE11 SQL views.',
-      'Host variables in ABAP SQL require the @ escape prefix.'
-    ]),
-    completion_criteria_json: JSON.stringify([
-      'Wrote modern Open SQL queries with host variable escaping.',
-      'Practiced VALUE # and CORRESPONDING # operators.'
-    ])
+    "id": "fc-08",
+    "category": "Modern Syntax",
+    "front": "How does the constructor expression VALUE #( ... ) initialize structures and tables?",
+    "back": "VALUE #( ... ) dynamically infers the target type from context, constructing structure rows or populating table lines inline.",
+    "code_snippet": "DATA(ls_cust) = VALUE ty_cust( id = 'C01' name = 'Alpha' ).\nDATA(lt_nums) = VALUE string_table( ( 'A' ) ( 'B' ) ( 'C' ) ).",
+    "explanation": "The hash (#) symbol directs the compiler to deduce the operand type from the receiving target variable.",
+    "mnemonic": "VALUE # = \"Infer type and populate value\"",
+    "difficulty": "easy"
   },
   {
-    day_number: 4,
-    title: 'Day 4 — Business Objects & RAP',
-    subtitle: 'BDEF, EML, Validations, Determinations & Services',
-    focus_area: 'Enterprise RESTful Programming Model',
-    objectives_json: JSON.stringify([
-      'Understand the ABAP RESTful Application Programming Model (RAP).',
-      'Create Behavior Definitions (BDEF) for managed scenarios.',
-      'Write validations and determinations to enforce business rules.',
-      'Execute Entity Manipulation Language (EML) statements.'
-    ]),
-    theory_md: `### Day 4 Intensive Theory
-
-SAP RAP is the modern standard for transactional cloud and on-premise application building:
-- **Behavior Definition**: Defines transactional capabilities (create, update, delete, actions).
-- **Validations**: Check invariants before save and populate \`FAILED\` and \`REPORTED\`.
-- **Determinations**: Calculate values automatically upon field change (e.g. calculating total price).
-- **EML**: Allows consuming the business object via ABAP statements (\`MODIFY ENTITIES\`).`,
-    code_examples_json: JSON.stringify([
-      {
-        title: 'EML Programmatic Consumption',
-        code: `MODIFY ENTITIES OF ZI_Booking
-  ENTITY Booking
-  CREATE FIELDS ( CustomerId FlightDate FlightPrice )
-  WITH VALUE #( ( %cid = 'NEW_01' CustomerId = '1001' FlightDate = '20261101' FlightPrice = '300' ) )
-  MAPPED DATA(lt_mapped)
-  FAILED DATA(lt_failed).
-
-COMMIT ENTITIES.`,
-        output: 'EML executed'
-      }
-    ]),
-    practice_tasks_json: JSON.stringify([
-      { id: 'task-4-1', title: 'Draft a Behavior Definition', description: 'Define a BDEF for a task management business object with validation on due date.' },
-      { id: 'task-4-2', title: 'EML Read Entities', description: 'Write an EML READ ENTITIES statement to retrieve bookings for a specific customer.' }
-    ]),
-    quiz_questions_json: JSON.stringify([
-      {
-        question: 'In a RAP Behavior Definition, which keyword is used to trigger business rule calculations automatically when a field value changes?',
-        options: ['determination', 'validation', 'action', 'projection'],
-        correctAnswer: 'determination',
-        explanation: 'Determinations automatically calculate values (such as order totals or status codes) when trigger events occur.'
-      }
-    ]),
-    revision_points_json: JSON.stringify([
-      'Validations check data integrity on save and report errors.',
-      'Determinations calculate or derive fields on modify or save.',
-      'EML operates directly on business objects with full transactional control.'
-    ]),
-    completion_criteria_json: JSON.stringify([
-      'Reviewed RAP architecture and behavior definition syntax.',
-      'Understood validations vs determinations lifecycle.'
-    ])
+    "id": "fc-09",
+    "category": "Modern Syntax",
+    "front": "What does the CORRESPONDING #( ... ) operator accomplish?",
+    "back": "It copies values between identical field names in two different structures or internal tables, replacing MOVE-CORRESPONDING.",
+    "code_snippet": "DATA ls_target TYPE ty_target.\nls_target = CORRESPONDING #( ls_source ).\n\n\" With mapping:\nls_target = CORRESPONDING #( ls_source MAPPING dest_id = src_id ).",
+    "explanation": "CORRESPONDING supports deep copying, BASE preservation, and explicit MAPPING or EXCEPT clauses.",
+    "mnemonic": "CORRESPONDING = Match and copy by identical component names",
+    "difficulty": "medium"
   },
   {
-    day_number: 5,
-    title: 'Day 5 — Integration, Testing & Capstone',
-    subtitle: 'ABAP Unit, Architecture & Capstone Project Execution',
-    focus_area: 'End-to-End Production Readiness',
-    objectives_json: JSON.stringify([
-      'Design test classes with FOR TESTING and cl_abap_unit_assert.',
-      'Integrate data modeling, business logic, and presentation layers.',
-      'Review common pitfalls, performance traces, and clean code principles.',
-      'Formulate a post-sprint long-term mastery learning roadmap.'
-    ]),
-    theory_md: `### Day 5 Intensive Theory
-
-The final day of the sprint consolidates your knowledge into an integrated, production-grade mindset:
-- **ABAP Unit**: Embedded testing framework running in ADT (Ctrl+Shift+F10). Test classes are declared \`FOR TESTING RISK LEVEL HARMLESS DURATION SHORT\`.
-- **Clean ABAP**: Keep methods small, express intent clearly, avoid obsolete statements (\`MOVE\`, \`TABLES\`, \`OCCURS\`).
-- **Capstone Planning**: Assemble the pieces into an end-to-end maintainable solution.`,
-    code_examples_json: JSON.stringify([
-      {
-        title: 'ABAP Unit Test Class Pattern',
-        code: `CLASS ltcl_calculator_test DEFINITION FINAL FOR TESTING
-  DURATION SHORT
-  RISK LEVEL HARMLESS.
-
-  PRIVATE SECTION.
-    DATA mo_cut TYPE REF TO lcl_calculator.
-    METHODS setup.
-    METHODS test_addition FOR TESTING.
-ENDCLASS.
-
-CLASS ltcl_calculator_test IMPLEMENTATION.
-  METHOD setup.
-    mo_cut = NEW lcl_calculator( ).
-  ENDMETHOD.
-
-  METHOD test_addition.
-    DATA(lv_res) = mo_cut->add( iv_a = 5 iv_b = 3 ).
-    cl_abap_unit_assert=>assert_equals(
-      exp = 8
-      act = lv_res
-      msg = 'Addition calculation failed'
-    ).
-  ENDMETHOD.
-ENDCLASS.`,
-        output: 'Test Class Verified'
-      }
-    ]),
-    practice_tasks_json: JSON.stringify([
-      { id: 'task-5-1', title: 'Capstone Implementation', description: 'Build the Employee Record Manager Capstone Project using local classes and internal tables.' },
-      { id: 'task-5-2', title: 'Write ABAP Unit Test', description: 'Write a unit test verifying that tax calculation throws error on negative salary.' }
-    ]),
-    quiz_questions_json: JSON.stringify([
-      {
-        question: 'Which method of cl_abap_unit_assert is used to verify that an actual result matches an expected value?',
-        options: ['assert_equals', 'verify_same', 'check_match', 'assert_identical'],
-        correctAnswer: 'assert_equals',
-        explanation: 'cl_abap_unit_assert=>assert_equals compares the expected value (exp) against actual value (act).'
-      }
-    ]),
-    revision_points_json: JSON.stringify([
-      'Unit tests prevent regressions and document expected behavior.',
-      'Never claim full mastery in 5 days; continuous practice on enterprise scenarios is required.'
-    ]),
-    completion_criteria_json: JSON.stringify([
-      'Constructed ABAP Unit test class.',
-      'Reviewed capstone project requirements and formulated next steps.'
-    ])
+    "id": "fc-10",
+    "category": "Modern Syntax",
+    "front": "What is the purpose of COND #( ... ) and SWITCH #( ... ) expressions?",
+    "back": "They evaluate expressions conditionally inline, returning a value based on Boolean conditions (COND) or matching values (SWITCH).",
+    "code_snippet": "DATA(lv_tier) = COND string(\n  WHEN iv_points > 1000 THEN 'Platinum'\n  WHEN iv_points > 500  THEN 'Gold'\n  ELSE 'Standard' ).",
+    "explanation": "Eliminates repetitive procedural IF-ELSE statements when assigning a single variable.",
+    "mnemonic": "COND = Inline IF. SWITCH = Inline CASE.",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fc-11",
+    "category": "Internal Tables",
+    "front": "How do Table Expressions lt_tab[ key = val ] behave when no record matches?",
+    "back": "Table expressions raise the catchable exception CX_SY_ITAB_LINE_NOT_FOUND, unless guarded with OPTIONAL or DEFAULT.",
+    "code_snippet": "\" Unsafe:\nDATA(ls_row) = lt_tab[ id = '999' ].\n\n\" Safe:\nDATA(ls_safe) = VALUE #( lt_tab[ id = '999' ] OPTIONAL ).",
+    "explanation": "Always use VALUE #( ... OPTIONAL ) or line_exists( ... ) to prevent uncaught runtime dumps.",
+    "mnemonic": "Brackets [] without OPTIONAL explode on missing key!",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fc-12",
+    "category": "Clean ABAP",
+    "front": "What is the Clean ABAP rule regarding method length and nesting depth?",
+    "back": "Methods should do one thing, be 3 to 20 lines long, and never exceed a nesting depth of 2 to 3 indent levels.",
+    "code_snippet": "\" Clean:\nMETHOD process_order.\n  validate_order( ).\n  calculate_taxes( ).\n  persist_order( ).\nENDMETHOD.",
+    "explanation": "Deep nesting (5+ IF/LOOP blocks) creates cognitive overload and untestable cyclomatic complexity.",
+    "mnemonic": "Small Methods = Single Responsibility",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fc-13",
+    "category": "OOP Principles",
+    "front": "What is the difference between casting operators ?= (Casting) and = (Assignment)?",
+    "back": "The assignment operator = performs narrowing casting (up-cast, safe). The ?= operator performs widening casting (down-cast, checked at runtime).",
+    "code_snippet": "DATA lo_parent TYPE REF TO lcl_parent.\nDATA lo_child  TYPE REF TO lcl_child.\n\nlo_parent = lo_child.   \" Narrowing (upcast, always valid)\nlo_child ?= lo_parent.  \" Widening (downcast, throws CX_SY_MOVE_CAST_ERROR if invalid)",
+    "explanation": "A downcast must be validated at runtime to verify the referenced instance actually belongs to the subclass.",
+    "mnemonic": "?= means \"Question mark: Is this instance really what I claim?\"",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fc-14",
+    "category": "Testing & QA",
+    "front": "Which test double framework in ABAP allows isolation from database dependencies?",
+    "back": "The ABAP SQL Test Double Framework (cl_osql_test_environment) allows mocking database tables and CDS views in unit tests.",
+    "code_snippet": "CLASS ltcl_test DEFINITION FOR TESTING DURATION SHORT RISK LEVEL HARMLESS.\n  PRIVATE SECTION.\n    CLASS-DATA mo_sql_env TYPE REF TO if_osql_test_environment.\n    CLASS-METHODS class_setup.\nENDCLASS.",
+    "explanation": "Unit tests must never depend on real database rows or produce persistent side effects.",
+    "mnemonic": "OSQL Test Environment = Sandbox database in RAM",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fc-15",
+    "category": "Performance",
+    "front": "Why is SELECT * considered an anti-pattern in high-volume ABAP programs?",
+    "back": "SELECT * fetches all table columns across the network from database to application server, wasting bandwidth and memory.",
+    "code_snippet": "\" Anti-pattern:\nSELECT * FROM bseg INTO TABLE @DATA(lt_bseg).\n\n\" Best practice:\nSELECT FROM bseg FIELDS bukrs, belnr, gjahr, dmbtr INTO TABLE @DATA(lt_items).",
+    "explanation": "Only fetch fields strictly needed for the business transaction. This leverages HANA column store memory compression.",
+    "mnemonic": "Fetch only what you chew (Fields list > SELECT *)",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fc-16",
+    "category": "Performance",
+    "front": "What transaction code is used to inspect SQL execution plans and trace database statements?",
+    "back": "ST05 (Performance Analysis / SQL Trace) captures exact execution times, index usage, and database roundtrips.",
+    "code_snippet": "\" Profile your Open SQL queries via ST05 to detect full table scans and redundant roundtrips.",
+    "explanation": "ST05 trace details records read vs returned, duration in microseconds, and identical statement executions.",
+    "mnemonic": "ST05 = SQL Trace",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fc-17",
+    "category": "CDS & RAP",
+    "front": "What is the distinction between a RAP Validation and a RAP Determination?",
+    "back": "Validations inspect entity data and reject saves if rules are violated (read-only checks). Determinations compute and modify entity values automatically.",
+    "code_snippet": "\" Validation:\nvalidation validateDates on save { field BeginDate, EndDate; create; update; }\n\n\" Determination:\ndetermination calculateTotal on modify { field Price; }",
+    "explanation": "Validations return failed / reported messages. Determinations update draft or active transactional data.",
+    "mnemonic": "Validation = Verify & Veto. Determination = Derive & Decide.",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fc-18",
+    "category": "CDS Architecture",
+    "front": "What is the purpose of a CDS Association compared to an Open SQL JOIN?",
+    "back": "A CDS Association is an on-demand \"lazy join\": it only executes in SQL if consumer queries explicitly navigate its path.",
+    "code_snippet": "define view entity ZI_Carrier as select from /dmo/carrier\n  association [0..*] to /dmo/flight as _Flights\n    on $projection.carrier_id = _Flights.carrier_id {\n  key carrier_id,\n      name,\n      _Flights\n}",
+    "explanation": "Associations model semantic relationships between entities without enforcing performance-costly joins upfront.",
+    "mnemonic": "Association = Joins on-demand (Lazy Loading)",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fc-19",
+    "category": "Modern Syntax",
+    "front": "What does the REDUCE operator achieve in modern ABAP?",
+    "back": "REDUCE iterates over an internal table, collapsing its rows into a single scalar value or structure accumulator.",
+    "code_snippet": "DATA(lv_sum) = REDUCE i(\n  INIT x = 0\n  FOR row IN lt_items\n  NEXT x = x + row-amount ).",
+    "explanation": "Replaces procedural LOOP AT with an inline functional fold/reduce accumulator.",
+    "mnemonic": "REDUCE = Collapse table into single result",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fc-20",
+    "category": "Interfaces",
+    "front": "How are interface components referenced in implementing ABAP classes?",
+    "back": "Interface components are accessed using the compound interface name and tilde (~), e.g. if_printer~print.",
+    "code_snippet": "CLASS lcl_report DEFINITION.\n  PUBLIC SECTION.\n    INTERFACES if_serializable_object.\n    INTERFACES if_oo_adt_classrun.\n    METHODS if_oo_adt_classrun~main REDEFINITION.\nENDCLASS.",
+    "explanation": "The tilde (~) preserves interface namespace separation and prevents method name collisions in multiple interface implementations.",
+    "mnemonic": "Interface~Method (Tilde connects interface to method)",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fc-21",
+    "category": "Security",
+    "front": "How is authorization checking enforced in CDS View Entities?",
+    "back": "Via Access Control DCL (Data Control Language) documents that bind to the CDS view entity using DEFINE ROLE.",
+    "code_snippet": "@MappingRole: true\ndefine role Z_Travel_Auth {\n  grant select on ZI_Travel_M\n  where ( CurrencyCode ) = aspect pfcg_auth( S_TABU_DIS, ACTVT = '03' );\n}",
+    "explanation": "DCL rules are automatically injected into the WHERE clause of generated SQL statements by the database interface.",
+    "mnemonic": "DCL = Data Control Language for CDS security",
+    "difficulty": "hard"
+  },
+  {
+    "id": "fc-22",
+    "category": "RAP & Services",
+    "front": "What are the two components required to expose a RAP business object as an OData service?",
+    "back": "1. Service Definition (defines which CDS entities to expose). 2. Service Binding (binds the definition to a protocol, e.g. OData V4 Web API or UI).",
+    "code_snippet": "\" Service Definition:\ndefine service ZUI_TRAVEL_V4 {\n  expose ZI_Travel_M as Travel;\n  expose ZI_Booking_M as Booking;\n}",
+    "explanation": "Service Bindings can be published for UI consumption (Fiori Elements) or Web API (A2X headless consumption).",
+    "mnemonic": "Definition chooses what. Binding chooses how.",
+    "difficulty": "medium"
+  },
+  {
+    "id": "fc-23",
+    "category": "System Fields",
+    "front": "What does SY-DBCNT hold in ABAP?",
+    "back": "SY-DBCNT contains the number of database table rows read, inserted, updated, or deleted by the most recently executed SQL statement.",
+    "code_snippet": "UPDATE zorders SET status = 'C' WHERE status = 'P'.\nWRITE: / |Updated { sy-dbcnt } pending orders|.",
+    "explanation": "Useful for logging batch operational metrics and verifying the exact row impact of modification queries.",
+    "mnemonic": "DBCNT = DataBase CouNT",
+    "difficulty": "easy"
+  },
+  {
+    "id": "fc-24",
+    "category": "OOP Principles",
+    "front": "What is a Singleton pattern in ABAP and how is it implemented?",
+    "back": "A Singleton guarantees only one instance exists. Implement with CREATE PRIVATE in class definition and a static method get_instance.",
+    "code_snippet": "CLASS lcl_app DEFINITION CREATE PRIVATE.\n  PUBLIC SECTION.\n    CLASS-METHODS get_instance RETURNING VALUE(ro_inst) TYPE REF TO lcl_app.\n  PRIVATE SECTION.\n    CLASS-DATA mo_instance TYPE REF TO lcl_app.\nENDCLASS.",
+    "explanation": "Restricting object instantiation to private visibility forces all callers through the factory method.",
+    "mnemonic": "CREATE PRIVATE + get_instance = Singleton",
+    "difficulty": "medium"
   }
 ];
 

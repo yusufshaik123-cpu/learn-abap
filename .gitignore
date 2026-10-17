@@ -1,0 +1,5 @@
+node_modules/
+dist/
+data/abap_mastery.db*
+.env
+.DS_Store

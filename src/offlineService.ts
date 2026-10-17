@@ -15,9 +15,12 @@ import type {
   LeaderboardResponse,
   LearnerProfile,
   Path,
+  Module,
   LessonDetail,
   Quiz,
+  QuizQuestion,
   QuizResult,
+  QuizAttemptReview,
   Challenge,
   ExecutionResult,
   Flashcard,
@@ -31,12 +34,17 @@ import type {
 const simulator = new AbapSimulator();
 
 // Flatten questions from SEED_QUIZZES
-const ALL_SEED_QUESTIONS = SEED_QUIZZES.flatMap(q =>
+const ALL_SEED_QUESTIONS: QuizQuestion[] = SEED_QUIZZES.flatMap(q =>
   ((q as any).questions || []).map((qn: any) => ({
-    ...qn,
+    id: qn.id,
     quiz_id: q.id,
+    question_type: qn.question_type as any,
+    question: qn.question,
     options: typeof qn.options_json === 'string' ? JSON.parse(qn.options_json) : (qn.options || []),
-    correct_answer: typeof qn.correct_answer_json === 'string' ? JSON.parse(qn.correct_answer_json) : qn.correct_answer
+    correct_answer: typeof qn.correct_answer_json === 'string' ? JSON.parse(qn.correct_answer_json) : qn.correct_answer,
+    explanation: qn.explanation,
+    difficulty: qn.difficulty as any,
+    topic: qn.topic || 'General'
   }))
 );
 
@@ -66,9 +74,8 @@ export const offlineService = {
       display_name: 'Learner',
       role_title: 'ABAP Developer',
       streak_days: 2,
-      daily_goal_minutes: 45,
-      target_completion_date: '2026-12-31',
-      theme_preference: 'dark',
+      daily_budget_mins: 45,
+      target_date: '2026-12-31',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     });
@@ -262,34 +269,48 @@ export const offlineService = {
       let totalLessons = 0;
       let completedLessons = 0;
 
-      const pathModules = modules.map(m => {
+      const pathModules: Module[] = modules.map(m => {
         const lessons = SEED_LESSONS.filter(l => l.module_id === m.id);
         totalLessons += lessons.length;
         const modCompleted = lessons.filter(l => progress[l.id]?.status === 'completed').length;
         completedLessons += modCompleted;
 
         return {
-          ...m,
-          total_lessons: lessons.length,
-          completed_lessons: modCompleted,
-          is_unlocked: true,
-          is_completed: modCompleted > 0 && modCompleted === lessons.length,
+          id: m.id,
+          path_id: m.path_id,
+          title: m.title,
+          description: m.description,
+          order_index: m.order_index,
+          estimated_mins: m.estimated_mins,
+          is_core: Boolean(m.is_core),
+          course_reference: m.course_reference || '',
           lessons: lessons.map(l => ({
-            ...l,
-            is_completed: progress[l.id]?.status === 'completed',
-            is_in_progress: progress[l.id]?.status === 'in_progress',
+            id: l.id,
+            module_id: l.module_id,
+            title: l.title,
+            order_index: l.order_index,
+            estimated_mins: l.estimated_mins,
+            is_core: Boolean(l.is_core),
+            user_status: (progress[l.id]?.status as any) || 'not_started',
             is_bookmarked: false
-          }))
+          })),
+          totalLessons: lessons.length,
+          completedLessons: modCompleted,
+          progressPercentage: lessons.length > 0 ? Math.round((modCompleted / lessons.length) * 100) : 0
         };
       });
 
       return {
-        ...path,
-        total_modules: modules.length,
-        total_lessons: totalLessons,
-        completed_lessons: completedLessons,
-        is_completed: totalLessons > 0 && completedLessons === totalLessons,
-        modules: pathModules
+        id: path.id,
+        title: path.title,
+        description: path.description,
+        order_index: path.order_index,
+        icon: path.icon,
+        badge: path.badge,
+        modules: pathModules,
+        totalLessons,
+        completedLessons,
+        progressPercentage: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0
       };
     });
   },
@@ -309,14 +330,25 @@ export const offlineService = {
     const nextLesson = currentIndex < allModuleLessons.length - 1 ? { id: allModuleLessons[currentIndex + 1].id, title: allModuleLessons[currentIndex + 1].title } : null;
 
     return {
-      ...lesson,
+      id: lesson.id,
+      module_id: lesson.module_id,
+      title: lesson.title,
+      order_index: lesson.order_index,
+      estimated_mins: lesson.estimated_mins,
+      is_core: Boolean(lesson.is_core),
+      user_status: (progress[lesson.id]?.status as any) || 'not_started',
+      is_bookmarked: bookmarks.includes(lesson.id),
       module_title: moduleItem?.title || '',
       path_id: pathItem?.id || '',
       path_title: pathItem?.title || '',
-      is_completed: progress[id]?.status === 'completed',
-      is_in_progress: progress[id]?.status === 'in_progress',
-      is_bookmarked: bookmarks.includes(id),
-      user_notes: notes[id] || '',
+      prerequisites: lesson.prerequisites || '',
+      objectives: lesson.objectives || '',
+      handbook_unit: lesson.handbook_unit || '',
+      summary: lesson.summary || '',
+      key_takeaways: lesson.key_takeaways || '',
+      content: typeof (lesson as any).content_json === 'string' ? JSON.parse((lesson as any).content_json) : (lesson as any).content || { sections: [] },
+      personal_notes: notes[lesson.id] || '',
+      scroll_position: progress[lesson.id]?.scroll_position || 0,
       prevLesson,
       nextLesson
     };
@@ -362,7 +394,13 @@ export const offlineService = {
       const qAttempts = attempts.filter(a => a.quiz_id === q.id);
       const best = qAttempts.length > 0 ? Math.max(...qAttempts.map(a => a.percentage)) : undefined;
       return {
-        ...q,
+        id: q.id,
+        lesson_id: q.lesson_id,
+        module_id: q.module_id,
+        title: q.title,
+        description: q.description,
+        mode: q.mode as any,
+        passing_score: q.passing_score,
         question_count: ((q as any).questions || []).length,
         attempts_count: qAttempts.length,
         best_score: best
@@ -374,7 +412,14 @@ export const offlineService = {
     const quiz = SEED_QUIZZES.find(q => q.id === id) || SEED_QUIZZES[0];
     const questions = ALL_SEED_QUESTIONS.filter(qn => qn.quiz_id === quiz.id);
     return {
-      ...quiz,
+      id: quiz.id,
+      lesson_id: quiz.lesson_id,
+      module_id: quiz.module_id,
+      title: quiz.title,
+      description: quiz.description,
+      mode: quiz.mode as any,
+      passing_score: quiz.passing_score,
+      question_count: questions.length,
       questions
     };
   },
@@ -382,7 +427,7 @@ export const offlineService = {
   submitQuiz(id: string, answers: Record<string, any>): QuizResult {
     const questions = ALL_SEED_QUESTIONS.filter(qn => qn.quiz_id === id);
     let score = 0;
-    const detailedResults = questions.map(q => {
+    const review: QuizAttemptReview[] = questions.map(q => {
       const userAns = answers[q.id];
       const correctAns = q.correct_answer;
       let isCorrect = false;
@@ -398,19 +443,24 @@ export const offlineService = {
       return {
         questionId: q.id,
         question: q.question,
+        questionType: q.question_type,
+        options: q.options || [],
         userAnswer: userAns,
         correctAnswer: correctAns,
         isCorrect,
-        explanation: q.explanation
+        explanation: q.explanation,
+        topic: q.topic || 'General'
       };
     });
 
     const total = questions.length || 1;
     const percentage = Math.round((score / total) * 100);
     const passed = percentage >= 70;
+    const attemptId = `att-${Date.now()}`;
 
     const attempts = getItem<any[]>('abap_quiz_attempts', []);
     attempts.push({
+      id: attemptId,
       quiz_id: id,
       score,
       total_questions: total,
@@ -422,38 +472,72 @@ export const offlineService = {
     this.syncActiveUser();
 
     return {
+      attemptId,
       score,
       totalQuestions: total,
       percentage,
       passed,
-      detailedResults
+      review
     };
   },
 
   // Challenges
   getChallenges(): Challenge[] {
     const prog = getItem<Record<string, any>>('abap_challenge_progress', {});
-    return SEED_CHALLENGES.map(c => ({
-      ...c,
-      status: prog[c.id]?.status || 'not_started',
-      user_code: prog[c.id]?.user_code || c.starter_code
-    }));
+    return SEED_CHALLENGES.map(c => {
+      const userProg = prog[c.id];
+      return {
+        id: c.id,
+        title: c.title,
+        category: c.category,
+        difficulty: c.difficulty as any,
+        order_index: c.order_index,
+        problem_statement: c.problem_statement,
+        input_assumptions: c.input_assumptions,
+        expected_output: c.expected_output,
+        test_cases: typeof (c as any).test_cases_json === 'string' ? JSON.parse((c as any).test_cases_json) : (c as any).test_cases || [],
+        constraints: c.constraints,
+        hints: typeof (c as any).hints_json === 'string' ? JSON.parse((c as any).hints_json) : (c as any).hints || [],
+        starter_code: c.starter_code,
+        reference_solution: c.reference_solution,
+        solution_explanation: c.solution_explanation,
+        related_concepts: typeof (c as any).related_concepts_json === 'string' ? JSON.parse((c as any).related_concepts_json) : (c as any).related_concepts || [],
+        user_status: (userProg?.status as any) || 'not_started',
+        user_code: userProg?.user_code || c.starter_code,
+        completed_at: userProg?.completed_at
+      };
+    });
   },
 
   getChallenge(id: string): Challenge {
     const challenge = SEED_CHALLENGES.find(c => c.id === id) || SEED_CHALLENGES[0];
     const prog = getItem<Record<string, any>>('abap_challenge_progress', {});
+    const userProg = prog[challenge.id];
     return {
-      ...challenge,
-      status: prog[id]?.status || 'not_started',
-      user_code: prog[id]?.user_code || challenge.starter_code
+      id: challenge.id,
+      title: challenge.title,
+      category: challenge.category,
+      difficulty: challenge.difficulty as any,
+      order_index: challenge.order_index,
+      problem_statement: challenge.problem_statement,
+      input_assumptions: challenge.input_assumptions,
+      expected_output: challenge.expected_output,
+      test_cases: typeof (challenge as any).test_cases_json === 'string' ? JSON.parse((challenge as any).test_cases_json) : (challenge as any).test_cases || [],
+      constraints: challenge.constraints,
+      hints: typeof (challenge as any).hints_json === 'string' ? JSON.parse((challenge as any).hints_json) : (challenge as any).hints || [],
+      starter_code: challenge.starter_code,
+      reference_solution: challenge.reference_solution,
+      solution_explanation: challenge.solution_explanation,
+      related_concepts: typeof (challenge as any).related_concepts_json === 'string' ? JSON.parse((challenge as any).related_concepts_json) : (challenge as any).related_concepts || [],
+      user_status: (userProg?.status as any) || 'not_started',
+      user_code: userProg?.user_code || challenge.starter_code,
+      completed_at: userProg?.completed_at
     };
   },
 
   runCode(id: string, code: string): ExecutionResult {
-    const challenge = SEED_CHALLENGES.find(c => c.id === id);
-    const testCases = challenge ? (challenge.test_cases as any[]) : [];
-    return simulator.execute(code, testCases);
+    const challenge = this.getChallenge(id);
+    return simulator.run(code, challenge.test_cases);
   },
 
   submitChallenge(id: string, code: string): ExecutionResult {
@@ -474,7 +558,7 @@ export const offlineService = {
     const cardState = getItem<Record<string, any>>('abap_flashcards', {});
     const now = new Date();
 
-    const cards = SEED_FLASHCARDS.map(fc => {
+    const cards: Flashcard[] = SEED_FLASHCARDS.map(fc => {
       const state = cardState[fc.id] || {
         interval_days: 1,
         ease_factor: 2.5,
@@ -482,7 +566,14 @@ export const offlineService = {
         reviews_count: 0
       };
       return {
-        ...fc,
+        id: fc.id,
+        category: fc.category,
+        front: fc.front,
+        back: fc.back,
+        code_snippet: fc.code_snippet,
+        explanation: fc.explanation,
+        mnemonic: fc.mnemonic,
+        difficulty: fc.difficulty as 'easy' | 'medium' | 'hard',
         interval_days: state.interval_days,
         ease_factor: state.ease_factor,
         due_date: state.due_date,
@@ -490,7 +581,7 @@ export const offlineService = {
       };
     });
 
-    const dueCount = cards.filter(c => new Date(c.due_date) <= now).length;
+    const dueCount = cards.filter(c => new Date(c.due_date || '').getTime() <= now.getTime()).length;
     return { cards, totalCount: cards.length, dueCount };
   },
 
@@ -533,9 +624,19 @@ export const offlineService = {
     const saved = getItem<Record<number, string[]>>('abap_sprint_tasks', {});
     return SEED_SPRINT_DAYS.map(day => {
       const completed = saved[day.day_number] || [];
-      const tasks = day.tasks ? (typeof day.tasks === 'string' ? JSON.parse(day.tasks) : day.tasks) : [];
+      const tasks = typeof (day as any).practice_tasks_json === 'string' ? JSON.parse((day as any).practice_tasks_json) : [];
       return {
-        ...day,
+        day_number: day.day_number,
+        title: day.title,
+        subtitle: day.subtitle,
+        focus_area: day.focus_area,
+        theory_md: day.theory_md,
+        objectives: typeof (day as any).objectives_json === 'string' ? JSON.parse((day as any).objectives_json) : [],
+        practice_tasks: tasks,
+        code_examples: typeof (day as any).code_examples_json === 'string' ? JSON.parse((day as any).code_examples_json) : [],
+        quiz_questions: typeof (day as any).quiz_questions_json === 'string' ? JSON.parse((day as any).quiz_questions_json) : [],
+        revision_points: typeof (day as any).revision_points_json === 'string' ? JSON.parse((day as any).revision_points_json) : [],
+        completion_criteria: typeof (day as any).completion_criteria_json === 'string' ? JSON.parse((day as any).completion_criteria_json) : [],
         completed_tasks: completed,
         is_completed: tasks.length > 0 && completed.length === tasks.length
       };
@@ -555,7 +656,7 @@ export const offlineService = {
     setItem('abap_sprint_tasks', saved);
 
     const sprintDay = SEED_SPRINT_DAYS.find(d => d.day_number === day);
-    const tasks = sprintDay?.tasks ? (typeof sprintDay.tasks === 'string' ? JSON.parse(sprintDay.tasks) : sprintDay.tasks) : [];
+    const tasks = sprintDay && typeof (sprintDay as any).practice_tasks_json === 'string' ? JSON.parse((sprintDay as any).practice_tasks_json) : [];
     const isCompleted = tasks.length > 0 && list.length === tasks.length;
 
     return { success: true, completedTasks: list, isCompleted };
@@ -566,12 +667,32 @@ export const offlineService = {
     const checkedState = getItem<Record<string, string[]>>('abap_project_checks', {});
     return SEED_PROJECTS.map(p => {
       const checked = checkedState[p.id] || [];
-      const checklist = p.checklist ? (typeof p.checklist === 'string' ? JSON.parse(p.checklist) : p.checklist) : [];
-      const isCompleted = checklist.length > 0 && checked.length === checklist.length;
+      const checklistRaw = p.checklist_json ? JSON.parse(p.checklist_json) : [];
+      const checklist = checklistRaw.map((item: any) => ({
+        id: item.id,
+        label: item.label,
+        done: checked.includes(item.id)
+      }));
+      const isCompleted = checklist.length > 0 && checklist.every((c: any) => c.done);
+
       return {
-        ...p,
-        checked_items: checked,
-        status: isCompleted ? 'completed' : checked.length > 0 ? 'in_progress' : 'not_started'
+        id: p.id,
+        title: p.title,
+        level: p.level as any,
+        order_index: p.order_index,
+        description: p.description,
+        objectives: p.objectives_json ? JSON.parse(p.objectives_json) : [],
+        prerequisites: p.prerequisites_json ? JSON.parse(p.prerequisites_json) : [],
+        functional_reqs: p.functional_reqs_json ? JSON.parse(p.functional_reqs_json) : [],
+        data_model: p.data_model || '',
+        milestones: p.milestones_json ? JSON.parse(p.milestones_json) : [],
+        test_scenarios: p.test_scenarios_json ? JSON.parse(p.test_scenarios_json) : [],
+        checklist,
+        concepts_learned: [],
+        extensions: [],
+        is_sandbox_compatible: Boolean(p.is_sandbox_compatible),
+        user_status: isCompleted ? 'completed' : checked.length > 0 ? 'in_progress' : 'not_started',
+        checked_items: checked
       };
     });
   },
@@ -589,8 +710,8 @@ export const offlineService = {
     setItem('abap_project_checks', checkedState);
 
     const project = SEED_PROJECTS.find(p => p.id === id);
-    const checklist = project?.checklist ? (typeof project.checklist === 'string' ? JSON.parse(project.checklist) : project.checklist) : [];
-    const isCompleted = checklist.length > 0 && list.length === checklist.length;
+    const checklistRaw = project?.checklist_json ? JSON.parse(project.checklist_json) : [];
+    const isCompleted = checklistRaw.length > 0 && list.length === checklistRaw.length;
 
     return {
       success: true,
@@ -608,11 +729,11 @@ export const offlineService = {
     const notes = this.getNotes();
     const newNote: PersonalNote = {
       id: `note-${Date.now()}`,
-      lesson_id: data.lesson_id,
-      lesson_title: data.lesson_title,
-      note_title: data.note_title || 'Untitled Note',
+      title: data.title || 'Untitled Note',
       content: data.content || '',
-      tags: data.tags || '',
+      tag: data.tag || 'General',
+      reference_type: data.reference_type,
+      reference_id: data.reference_id,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -645,13 +766,11 @@ export const offlineService = {
         const mod = SEED_MODULES.find(m => m.id === lesson.module_id);
         const path = mod ? SEED_PATHS.find(p => p.id === mod.path_id) : undefined;
         return {
-          id: `bm-${id}`,
-          lesson_id: id,
+          id: lesson.id,
           title: lesson.title,
+          module_id: lesson.module_id,
           module_title: mod?.title || '',
-          path_title: path?.title || '',
-          estimated_mins: lesson.estimated_mins,
-          created_at: new Date().toISOString()
+          path_title: path?.title || ''
         };
       })
       .filter(Boolean) as Bookmark[];
@@ -663,7 +782,7 @@ export const offlineService = {
     const progress = getItem<Record<string, any>>('abap_lesson_progress', {});
     const incompleteLessons = SEED_LESSONS.filter(l => progress[l.id]?.status !== 'completed').slice(0, 3);
     const { cards } = this.getFlashcards();
-    const dueCards = cards.filter(c => new Date(c.due_date) <= new Date()).slice(0, 5);
+    const dueCards = cards.filter(c => new Date(c.due_date || '').getTime() <= Date.now()).slice(0, 5);
     const challenges = SEED_CHALLENGES.slice(0, 2);
 
     return {
@@ -695,43 +814,49 @@ export const offlineService = {
 
     const totalLessons = SEED_LESSONS.length || 1;
     const totalChallenges = SEED_CHALLENGES.length || 1;
+    const lessonProgressPct = Math.round((completedLessons / totalLessons) * 100);
+    const challengeProgressPct = Math.round((completedChallenges / totalChallenges) * 100);
 
     const lessonScore = Math.min(40, Math.round((completedLessons / totalLessons) * 40));
     const quizScore = Math.min(30, Math.round((avgAccuracy / 100) * 30));
     const challengeScore = Math.min(30, Math.round((completedChallenges / totalChallenges) * 30));
-    const overallScore = lessonScore + quizScore + challengeScore;
+    const masteryScore = lessonScore + quizScore + challengeScore;
 
     const paths = this.getPaths();
-    const pathProgress = paths.map(p => ({
-      path_id: p.id,
+    const pathBreakdown = paths.map(p => ({
+      pathId: p.id,
       title: p.title,
-      total_lessons: p.total_lessons,
-      completed_lessons: p.completed_lessons,
-      percentage: p.total_lessons > 0 ? Math.round((p.completed_lessons / p.total_lessons) * 100) : 0
+      total: p.totalLessons,
+      completed: p.completedLessons,
+      percentage: p.progressPercentage
     }));
 
+    const cardState = getItem<Record<string, any>>('abap_flashcards', {});
+    const reviewedCards = Object.values(cardState).filter(c => (c.reviews_count || 0) > 0).length;
+
     return {
-      mastery: {
-        overall_score: overallScore,
-        lesson_score: lessonScore,
-        quiz_score: quizScore,
-        challenge_score: challengeScore,
-        formula: 'Mastery = (Completed Lessons / Total × 40%) + (Avg Quiz Accuracy × 30%) + (Completed Challenges / Total × 30%)'
-      },
-      stats: {
-        totalLessons,
-        completedLessons,
-        totalQuizzes: SEED_QUIZZES.length,
-        quizAttempts: quizAttempts.length,
-        avgAccuracy,
-        totalChallenges,
-        completedChallenges,
-        streakDays: this.getProfile().streak_days || 1,
-        totalNotes: this.getNotes().length,
-        totalBookmarks: this.getBookmarks().length
-      },
-      pathProgress,
-      recentAttempts: quizAttempts.slice(-5).reverse()
+      totalLessons,
+      completedLessons,
+      lessonProgressPct,
+      totalChallenges,
+      completedChallenges,
+      challengeProgressPct,
+      avgQuizAccuracy: avgAccuracy,
+      totalQuizAttempts: quizAttempts.length,
+      totalCards: SEED_FLASHCARDS.length,
+      reviewedCards,
+      totalStudyMins: completedLessons * 25 + completedChallenges * 30 + quizAttempts.length * 15,
+      masteryScore,
+      masteryFormula: 'Mastery = (40% × Lesson Completion) + (30% × Quiz Accuracy) + (30% × Challenges Solved)',
+      pathBreakdown,
+      recentActivity: quizAttempts.slice(-5).reverse().map((qa, idx) => ({
+        id: `act-${idx}`,
+        activity_type: 'quiz',
+        reference_id: qa.quiz_id,
+        duration_mins: 15,
+        created_at: qa.created_at,
+        summary: `Completed Quiz (${qa.score}/${qa.total_questions} - ${qa.percentage}%)`
+      }))
     };
   },
 

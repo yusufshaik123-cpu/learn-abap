@@ -9,6 +9,7 @@ import {
   SEED_PROJECTS
 } from './data/seedData';
 import { AbapSimulator } from './data/abapRunner';
+import { supabaseClient } from './supabaseClient';
 import type {
   UserProfile,
   LeaderboardResponse,
@@ -96,7 +97,7 @@ export const offlineService = {
     return { users, activeUser };
   },
 
-  createUser(data: { username: string; display_name: string; role_title: string; avatar_color: string }): { success: boolean; user: UserProfile } {
+  async createUser(data: { username: string; display_name: string; role_title: string; avatar_color: string }): Promise<{ success: boolean; user: UserProfile }> {
     const { users } = this.getUsers();
     const cleanUsername = data.username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
     const cleanDisplay = data.display_name?.trim() || cleanUsername;
@@ -130,6 +131,22 @@ export const offlineService = {
 
     setItem('abap_users', users);
     this.updateProfile({ display_name: cleanDisplay, role_title: cleanRole });
+
+    // Sync to Supabase Cloud
+    supabaseClient.upsertUser({
+      id: user.id,
+      username: user.username,
+      display_name: user.display_name,
+      role_title: user.role_title,
+      avatar_color: user.avatar_color,
+      xp: user.xp,
+      streak_days: user.streak_days,
+      lessons_completed: 0,
+      quizzes_passed: 0,
+      challenges_solved: 0,
+      mastery_score: 0
+    }).catch(() => {});
+
     return { success: true, user };
   },
 
@@ -142,11 +159,44 @@ export const offlineService = {
     const active = users.find(u => u.id === userId) || users[0];
     if (active) {
       this.updateProfile({ display_name: active.display_name, role_title: active.role_title });
+      this.syncActiveUser();
     }
     return { success: true, activeUser: active };
   },
 
-  getLeaderboard(): LeaderboardResponse {
+  syncActiveUser() {
+    try {
+      const { activeUser } = this.getUsers();
+      if (!activeUser) return;
+      const progress = getItem<Record<string, { status: string }>>('abap_lesson_progress', {});
+      const completedLessons = Object.values(progress).filter(p => p.status === 'completed').length;
+      const challengeProg = getItem<Record<string, { status: string }>>('abap_challenge_progress', {});
+      const completedChallenges = Object.values(challengeProg).filter(p => p.status === 'completed').length;
+      const quizAttempts = getItem<any[]>('abap_quiz_attempts', []);
+      const quizzesPassed = quizAttempts.filter(q => q.passed).length;
+      const avgAccuracy = quizAttempts.length > 0 ? Math.round(quizAttempts.reduce((acc, q) => acc + q.percentage, 0) / quizAttempts.length) : 0;
+
+      const streakDays = activeUser?.streak_days || 1;
+      const calculatedXP = Math.max(100, (completedLessons * 50) + (quizzesPassed * 40) + (completedChallenges * 150) + (streakDays * 25));
+      const masteryScore = Math.min(100, Math.round(((completedLessons / 10) * 40) + ((avgAccuracy / 100) * 30) + ((completedChallenges / 3) * 30)));
+
+      supabaseClient.upsertUser({
+        id: activeUser.id,
+        username: activeUser.username,
+        display_name: activeUser.display_name,
+        role_title: activeUser.role_title,
+        avatar_color: activeUser.avatar_color,
+        xp: calculatedXP,
+        streak_days: streakDays,
+        lessons_completed: completedLessons,
+        quizzes_passed: quizzesPassed,
+        challenges_solved: completedChallenges,
+        mastery_score: masteryScore
+      }).catch(() => {});
+    } catch {}
+  },
+
+  async getLeaderboard(): Promise<LeaderboardResponse> {
     const { users, activeUser } = this.getUsers();
     const progress = getItem<Record<string, { status: string }>>('abap_lesson_progress', {});
     const completedLessons = Object.values(progress).filter(p => p.status === 'completed').length;
@@ -168,16 +218,29 @@ export const offlineService = {
       activeUser.mastery_score = masteryScore;
     }
 
-    const leaderboard = users.map(u => ({
-      ...u,
-      lessons_completed: u.is_active ? completedLessons : Math.max(3, Math.round(u.xp / 180)),
-      quizzes_passed: u.is_active ? quizzesPassed : Math.max(2, Math.round(u.xp / 350)),
-      challenges_solved: u.is_active ? completedChallenges : Math.max(1, Math.round(u.xp / 400)),
-      mastery_score: u.is_active ? masteryScore : Math.min(95, Math.round(u.xp / 36))
-    }));
+    // Always trigger background sync to Supabase for the active user
+    this.syncActiveUser();
 
-    leaderboard.sort((a, b) => b.xp - a.xp);
-    const ranked = leaderboard.map((item, index) => ({
+    // Query Supabase Cloud for global platform leaderboard
+    let cloudUsers = await supabaseClient.getLeaderboard();
+    let cloudSynced = false;
+    let finalLeaderboard: any[] = [];
+
+    if (cloudUsers && cloudUsers.length > 0) {
+      cloudSynced = true;
+      finalLeaderboard = cloudUsers;
+    } else {
+      finalLeaderboard = users.map(u => ({
+        ...u,
+        lessons_completed: u.is_active ? completedLessons : Math.max(3, Math.round(u.xp / 180)),
+        quizzes_passed: u.is_active ? quizzesPassed : Math.max(2, Math.round(u.xp / 350)),
+        challenges_solved: u.is_active ? completedChallenges : Math.max(1, Math.round(u.xp / 400)),
+        mastery_score: u.is_active ? masteryScore : Math.min(95, Math.round(u.xp / 36))
+      }));
+    }
+
+    finalLeaderboard.sort((a, b) => b.xp - a.xp);
+    const ranked = finalLeaderboard.map((item, index) => ({
       ...item,
       rank: index + 1,
       isCurrentUser: activeUser ? (item.id === activeUser.id || item.username === activeUser.username) : false
@@ -186,7 +249,7 @@ export const offlineService = {
     return {
       leaderboard: ranked,
       activeUser,
-      cloudSynced: false,
+      cloudSynced,
       totalUsers: ranked.length
     };
   },
@@ -267,6 +330,7 @@ export const offlineService = {
       completed_at: status === 'completed' ? new Date().toISOString() : null
     };
     setItem('abap_lesson_progress', progress);
+    this.syncActiveUser();
     return { success: true, status, completedAt: progress[id].completed_at };
   },
 
@@ -355,6 +419,7 @@ export const offlineService = {
       created_at: new Date().toISOString()
     });
     setItem('abap_quiz_attempts', attempts);
+    this.syncActiveUser();
 
     return {
       score,
@@ -400,6 +465,7 @@ export const offlineService = {
       completed_at: result.status === 'passed' ? new Date().toISOString() : null
     };
     setItem('abap_challenge_progress', prog);
+    this.syncActiveUser();
     return result;
   },
 

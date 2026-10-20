@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
+import { MobileBottomNav } from './components/MobileBottomNav';
 import { SearchModal } from './components/SearchModal';
 import { UserModal } from './components/UserModal';
 import { DashboardPage } from './pages/DashboardPage';
@@ -23,6 +24,7 @@ export const App: React.FC = () => {
   const [activeUser, setActiveUser] = useState<UserProfile | null>(null);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [isDark, setIsDark] = useState(true);
@@ -94,16 +96,19 @@ export const App: React.FC = () => {
           onOpenUserModal={() => setIsUserModalOpen(true)}
           isDark={isDark}
           onToggleTheme={handleToggleTheme}
+          onToggleMobileMenu={() => setIsMobileMenuOpen(prev => !prev)}
         />
 
-        {/* Body Layout: Sidebar + Main Content */}
-        <div className="flex-1 flex overflow-hidden">
+        {/* Body Layout: Desktop Persistent Sidebar + Main Content */}
+        <div className="flex-1 flex overflow-hidden relative">
           <Sidebar
             isCollapsed={isSidebarCollapsed}
             onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            isMobileOpen={isMobileMenuOpen}
+            onCloseMobile={() => setIsMobileMenuOpen(false)}
           />
 
-          <main className="flex-1 overflow-y-auto min-h-[calc(100vh-4rem)]">
+          <main className="flex-1 overflow-y-auto w-full min-w-0 pb-20 md:pb-6">
             <Routes>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/leaderboard" element={<LeaderboardPage onOpenUserModal={() => setIsUserModalOpen(true)} />} />
@@ -119,6 +124,9 @@ export const App: React.FC = () => {
             </Routes>
           </main>
         </div>
+
+        {/* Mobile Native-Style Bottom Navigation Bar */}
+        <MobileBottomNav onOpenMenu={() => setIsMobileMenuOpen(true)} />
 
         {/* Global Instant Search Modal */}
         <SearchModal
